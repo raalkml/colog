@@ -25,6 +25,20 @@ static struct regex_color colors[] = {
 			esc_ _default _esc,
 		}
 	},
+	{ /* postfix deferred */
+		STDIN_FILENO,
+		"^(...[ \t]*[0-9]+[ \t]+..:..:.. )([^ \t]+ )(postfix/smtp)(\\[[0-9]+\\])(:)(.*, status=deferred )(.*)",
+		{
+			esc_ cyan _esc,
+			esc_ yellow _esc,
+			esc_ cyan _esc,
+			esc_ bold ";" green _esc,
+			esc_ bold_off ";" green _esc,
+			esc_ bold ";" cyan _esc,
+			esc_ bold_off ";" cyan _esc,
+			esc_ bold_off ";" red _esc,
+		}
+	},
 	{ /* syslog facility with a pid */
 		STDIN_FILENO,
 		"^(...[ \t]*[0-9]+[ \t]+..:..:.. )([^ \t]+ )([^ \t]+)(\\[[0-9]+\\])(:)(.*)",
