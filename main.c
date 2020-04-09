@@ -91,7 +91,6 @@ static int print_default(int fd, char * line, int len)
 
 static struct hook hooks[] = {
 	{ &regex_colors  },
-	{ &syslogmsgs    },
 	{ &external      },
 	{ &print_default }
 };
