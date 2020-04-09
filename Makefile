@@ -66,7 +66,7 @@ endif
 
 .PHONY: test
 test: $(target)
-	$(abspath $<) cat test/*
+	$(abspath $<) -- tail -n10000 test/*
 #	@$(ARCH)/$(PROGNAME) -vs sh -c 'echo Test1& echo >&2 Test2& echo Test3& wait'
 
 #install: all
