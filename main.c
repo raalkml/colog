@@ -45,13 +45,12 @@ void terminate(int sig)
 // pass everything on stdin of an external program.
 static int external(int fd, char * line, int len)
 {
-	if ( !*external_filter )
+	if (!external_filter || !*external_filter)
 		return NEXT; // no external filter given
 
 	static int hh[2] = {-1, -1};
 
-	if ( external_filter_pid < 0 )
-	{
+	if (external_filter_pid < 0) {
 		if ( pipe(hh) < 0 )
 			return outputs(2, myname, ": pipe:", strerror(errno), "\n", 0),
 			       FAIL;
