@@ -1,0 +1,40 @@
+Apr  9 09:07:53 pflmari rsyslogd:  [origin software="rsyslogd" swVersion="8.1901.0" x-pid="2591" x-info="https://www.rsyslog.com"] rsyslogd was HUPed
+Apr  9 09:08:59 pflmari ntpd[4479]: adjusting local clock by -0.223200s
+Apr  9 09:08:59 pflmari rsyslogd: action 'action-10-builtin:ompipe' resumed (module 'builtin:ompipe') [v8.1901.0 try https://www.rsyslog.com/e/2359 ]
+Apr  9 09:09:04 pflmari anacron[2645]: Job `cron.daily' terminated
+Apr  9 09:09:04 pflmari anacron[2645]: Normal exit (1 job run)
+Apr  9 09:12:07 pflmari ntpd[4479]: adjusting local clock by -0.129471s
+Apr  9 09:13:51 pflmari ntpd[4479]: adjusting local clock by -0.077237s
+Apr  9 09:15:01 pflmari CRON[6830]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+Apr  9 09:25:01 pflmari CRON[7139]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+Apr  9 09:30:01 pflmari CRON[7257]: (root) CMD ([ -x /etc/init.d/anacron ] && if [ ! -d /run/systemd/system ]; then /usr/sbin/invoke-rc.d anacron start >/dev/null; fi)
+Apr  9 09:30:01 pflmari anacron[7278]: Anacron 2.3 started on 2020-04-09
+Apr  9 09:30:01 pflmari anacron[7278]: Normal exit (0 jobs run)
+Apr  9 09:35:01 pflmari CRON[7395]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+Apr  9 09:42:40 pflmari ntpd[4479]: adjusting clock frequency by 1.174696 to 8.415693ppm
+Apr  9 09:45:01 pflmari CRON[7635]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+Apr  9 09:55:01 pflmari CRON[7872]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+Apr  9 10:00:01 pflmari CRON[7986]: (ari) CMD (fetchmail &>/dev/null || :)
+Apr  9 10:01:27 pflmari ntpd[4479]: adjusting clock frequency by -0.073798 to 8.341882ppm
+Apr  9 10:05:01 pflmari CRON[8138]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+Apr  9 10:15:01 pflmari CRON[8382]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+Apr  9 10:24:42 pflmari ntpd[4479]: adjusting clock frequency by 0.735378 to 9.077251ppm
+Apr  9 10:25:01 pflmari CRON[8620]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+Apr  9 10:30:01 pflmari CRON[8746]: (root) CMD ([ -x /etc/init.d/anacron ] && if [ ! -d /run/systemd/system ]; then /usr/sbin/invoke-rc.d anacron start >/dev/null; fi)
+Apr  9 10:30:01 pflmari anacron[8767]: Anacron 2.3 started on 2020-04-09
+Apr  9 10:30:01 pflmari anacron[8767]: Normal exit (0 jobs run)
+Apr  9 10:35:01 pflmari CRON[9110]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+Apr  9 10:45:01 pflmari CRON[9715]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+Apr  9 10:55:01 pflmari CRON[10315]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+Apr  9 11:00:01 pflmari CRON[10616]: (ari) CMD (fetchmail &>/dev/null || :)
+Apr  9 11:05:01 pflmari CRON[10795]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+Apr  9 11:07:23 pflmari mtp-probe: checking bus 3, device 8: "/sys/devices/pci0000:00/0000:00:14.0/usb3/3-3"
+Apr  9 11:07:23 pflmari mtp-probe: bus: 3, device: 8 was not an MTP device
+Apr  9 11:07:23 pflmari mtp-probe: checking bus 3, device 8: "/sys/devices/pci0000:00/0000:00:14.0/usb3/3-3"
+Apr  9 11:07:23 pflmari mtp-probe: bus: 3, device: 8 was not an MTP device
+Apr  9 11:15:01 pflmari CRON[11631]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+Apr  9 11:25:01 pflmari CRON[12156]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+Apr  9 11:30:01 pflmari CRON[12460]: (root) CMD ([ -x /etc/init.d/anacron ] && if [ ! -d /run/systemd/system ]; then /usr/sbin/invoke-rc.d anacron start >/dev/null; fi)
+Apr  9 11:30:01 pflmari anacron[12481]: Anacron 2.3 started on 2020-04-09
+Apr  9 11:30:01 pflmari anacron[12481]: Normal exit (0 jobs run)
+Apr  9 11:35:01 pflmari CRON[12763]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
