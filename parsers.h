@@ -13,7 +13,6 @@
 #define NEXT -1
 #define FAIL -1
 
-int syslogmsgs(int, char *, int);
 int regex_colors(int fd, char *line, int len);
 
 #endif // __parsers_h__

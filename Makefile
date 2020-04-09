@@ -3,7 +3,6 @@
 #
 target = colog
 sources :=         \
-    syslogmsgs.c   \
     regex_colors.c \
     main.c         \
     ptyrun.c       \
