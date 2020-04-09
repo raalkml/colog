@@ -403,7 +403,7 @@ int ptyrun(char* argv[], struct hook * hooks, int hcount, int merge)
         return -1;
     
     struct child_stream buf, ebuf;
-    int rc, wok;
+    int rc = -1, wok;
 #if defined(arch_rs6000) || defined(arch_gccrs6000)
     int timeout = 300;
 #else
