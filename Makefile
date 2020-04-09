@@ -3,8 +3,8 @@
 #
 target = colog
 sources :=        \
-    main.c        \
     syslogmsgs.c  \
+    main.c        \
     ptyrun.c      \
     output.c      \
     match.c       \
