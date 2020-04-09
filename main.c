@@ -17,7 +17,6 @@
 const char *myname;
 static char *external_filter;
 static pid_t external_filter_pid = -1;
-extern pid_t child;
 int restart = 0;
 
 void interrupt(int sig)

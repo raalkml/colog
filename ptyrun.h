@@ -12,5 +12,6 @@ void show_params(char * const *argv, int fd);
 
 extern int verbose;
 extern int restart;
+extern pid_t child;
 
 #endif /* _PTYRUN_H_ */
