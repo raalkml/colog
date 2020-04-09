@@ -76,13 +76,12 @@ int output(int fd, const char * arg0, int len0, ...)
     va_start(ap, len0);
     struct iovec * vec = (struct iovec *)alloca(sizeof(struct iovec) * n);
     vec[0].iov_base = (caddr_t)arg0;
-    vec[0].iov_len  = len0 < 0 ? strlen(arg0): len0;
+    vec[0].iov_len  = len0 < 0 ? strlen(arg0): (size_t)len0;
     for ( int i = 1; i < n; ++i )
     {
         vec[i].iov_base = va_arg(ap, caddr_t);
         al = va_arg(ap, int);
-        vec[i].iov_len  = (size_t)(al < 0 ?
-                                   strlen((const char*)vec[i].iov_base): al);
+        vec[i].iov_len  = al < 0 ? strlen((const char*)vec[i].iov_base): (size_t)al;
     }
     va_end(ap);
     return writev(fd, vec, n);
@@ -94,10 +93,9 @@ int outputf(int fd, const char * format, ...)
     va_start(ap, format);
     
     FILE * fp = 1 == fd ? stdout: (2 == fd ? stderr: fdopen(fd, "w"));
-    int n = 0;
     if ( fp )
     {
-        n = vfprintf(fp, format, ap);
+        vfprintf(fp, format, ap);
         if ( !(1 == fd || 2 == fd) )
             fclose(fp);
     }
