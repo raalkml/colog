@@ -9,6 +9,7 @@
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <getopt.h>
 
 #include "ptyrun.h"
 #include "output.h"
@@ -135,47 +136,49 @@ static char * number(char * buf, char * end, long num, int base)
 	}
 	return buf;
 }
+
+static void usage(const char *argv0)
+{
+	outputs(1,
+		argv0, ": no command given\n",
+		argv0, ": an output preprocessor\n",
+		argv0, " [-sv -c <filter command> --] command ...\n"
+		" -s  separate stdout and stderr into different streams\n"
+		" -v  verbose\n"
+		" -c  set the filter command (it will be responsible"
+		" for all unhandled output);\n"
+		" -R  restart the command after it has finished\n"
+		"     the command is executed through your $SHELL.\n"
+		" \"--\" can be used to separate the command beginning\n"
+		"        with dash from the parameters. Everything after\n"
+		"        the dashes will be passed to the execvp(3).\n",
+		0);
+	exit(1);
+}
+
 int main(int argc, char **argv)
 {
-	verbose = 0;
-	int merge = 1;
+	int merge = 1, opt;
 	char *argv0 = *argv;
 
-	for ( char **p = ++argv; *p; ++p ) {
-		if ( '-' != **p )
-			break;
-		for ( char * pc = p[0] + 1; *pc; ++pc )
-			switch ( *pc ) {
-			case 's': // separate stdout/stderr
-				merge = 0;
-				if ( p + 1 > argv ) argv = p + 1;
-				break;
-			case 'v': // verbose (show the commands after fork
-				verbose = 1;
-				if ( p + 1 > argv ) argv = p + 1;
-				break;
-			case 'c':
-				if ( *p[1] ) {
-					external_filter = *++p;
-					if ( p + 1 > argv ) argv = p + 1;
-					goto _next_param;
-				}
-				break;
-			case 'R':
-				restart = 1;
-				if ( p + 1 > argv ) argv = p + 1;
-				break;
-			case '-': // end of params
-				argv = p + 1;
-			default:  // unknown parameter
-				goto _start;
-			}
-_next_param:
-		;
-	}
-_start:
+	verbose = 0;
 	if (strrchr(argv0, '/'))
 		myname = strrchr(argv0, '/') + 1;
+	while ((opt = getopt(argc, argv, "vsRc:")) != -1)
+		switch (opt) {
+		case 'v':
+			++verbose;
+			break;
+		case 's':
+			merge = 1;
+			break;
+		case 'c':
+			external_filter = optarg;
+			break;
+		case '?':
+			usage(myname);
+		}
+
 	if (verbose) {
 		outputs(1, myname, ": verbose mode\n", 0);
 		if (!merge)
@@ -186,23 +189,8 @@ _start:
 			outputs(1, "\n", 0);
 		}
 	}
-	if (!*argv) {
-		outputs(2,
-			myname, ": no command given\n",
-			myname, ": an output preprocessor\n",
-			myname, " [-sv -c <filter command> --] command ...\n"
-			" -s  separate stdout and stderr into different streams\n"
-			" -v  verbose\n"
-			" -c  set the filter command (it will be responsible"
-			" for all unhandled output);\n"
-			" -R  restart the command after it has finished\n"
-			"     the command is executed through your $SHELL.\n"
-			" \"--\" can be used to separate the command beginning\n"
-			"        with dash from the parameters. Everything after\n"
-			"        the dashes will be passed to the execvp(3).\n",
-			0);
-		exit(1);
-	}
+	if (!*argv)
+		usage(myname);
 	signal(SIGINT, interrupt);
 	signal(SIGTERM, terminate);
 	signal(SIGPIPE, terminate);
@@ -211,7 +199,7 @@ _start:
 	int status = 0;
 
 	do {
-		status = ptyrun(argv, hooks, sizeof(hooks)/sizeof(*hooks), merge);
+		status = ptyrun(argv + optind, hooks, sizeof(hooks)/sizeof(*hooks), merge);
 		if (verbose && restart) {
 			char num[32];
 			*number(num, num+32, status, 10) = '\0';
