@@ -121,7 +121,10 @@ int regex_colors(int fd, char *line, int len)
 		if (!rc->re.buffer) {
 			int err = regcomp(&rc->re, rc->expr, REG_EXTENDED | REG_ICASE);
 			if (err) {
-				error(STDERR_FILENO, "regex error:", -1, rc->expr, -1);
+				char errstr[BUFSIZ];
+				error(STDERR_FILENO, "regex error: ", -1, rc->expr, -1);
+				regerror(err, &rc->re, errstr, sizeof(errstr));
+				error(STDERR_FILENO, "regex error: ", -1, errstr, -1);
 				rc->expr = IGNORE_ITEM;
 				continue;
 			}
