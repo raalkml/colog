@@ -65,7 +65,7 @@ static int external(int fd, char * line, int len)
 			dup2(hh[0], 0);
 			close(hh[0]);
 
-			static char * args[3] = {0};
+			static char * args[4] = {0};
 			args[0] = "sh";
 			args[1] = "-c";
 			args[2] = external_filter;
