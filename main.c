@@ -1,4 +1,6 @@
-// portable pty-preparser for wide range of compilers (gcc,HPaCC,SunCC,IBMxlC)
+//
+// A log colorizer for systems with pty
+//
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
@@ -18,7 +20,7 @@ static pid_t external_filter_pid = -1;
 extern pid_t child;
 int restart = 0;
 
-void interrupt(int)
+void interrupt(int sig)
 {
     signal(SIGINT, interrupt);
     if ( verbose )
@@ -29,7 +31,7 @@ void interrupt(int)
         kill(-child, SIGINT);
     exit(1);
 }
-void terminate(int)
+void terminate(int sig)
 {
     if ( verbose )
         outputs(2, "terminate\n", 0);
@@ -87,7 +89,7 @@ static int print_default(int fd, char * line, int len)
     return STOP; // i am the last.
 }
 
-static hook_t hooks[] = {
+static struct hook hooks[] = {
     { &syslogmsgs    },
     { &external      },
     { &print_default }
@@ -106,13 +108,12 @@ static hook_t hooks[] = {
 
 static char * number(char * buf, char * end, long num, int base)
 {
-	char c,sign,tmp[66];
+	char sign, tmp[66];
 	const char *digits = "0123456789abcdef";
 	int i;
 
 	if (base < 2 || base > 16)
 		return 0;
-	c = ' ';
 	sign = 0;
 	if (num < 0) {
 		sign = '-';
@@ -135,7 +136,7 @@ static char * number(char * buf, char * end, long num, int base)
 	}
 	return buf;
 }
-int main(int, char **argv)
+int main(int argc, char **argv)
 {
     verbose = 0;
     int merge = 1;
@@ -188,7 +189,7 @@ _start:
         if ( *argv )
         {
             outputs(1, myname, ": parameters(concatenated): ", 0);
-            output(1, argv, -1);
+            output_args(1, argv, -1);
             outputs(1, "\n", 0);
         }
     }

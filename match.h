@@ -19,7 +19,7 @@ int ends(const char * str1, const char * str2);
 // Return matched length, or 0. If terms is not 0, it is used as a
 // termination sequence of the possible name. '\0' is always a
 // terminator. maxlen == -1 makes maxlen to strlen(str1).
-int is_pathname(const char * str1, int maxlen = -1, const char * terms = 0);
+int is_pathname(const char * str1, int maxlen /* = -1 */, const char * terms /* = NULL */);
 
 #endif
 #if UNDEF

@@ -1,5 +1,3 @@
-// portable pty-preparser for wide range of compilers (gcc,HPaCC,SunCC,IBMxlC)
-
 #ifndef __escape_seq_h__
 #define __escape_seq_h__ "xterm"
 

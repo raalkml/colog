@@ -12,18 +12,18 @@
 
 #include "output.h"
 
-int output(int fd, const char * const * args, int n)
+int output_args(int fd, char * const * args, int n)
 {
     if ( !n )
         return 0;
     else if ( n < 0 )
     {
         n = 0;
-        for ( const char * const * p = args; *p; ++p )
+        for ( char * const * p = args; *p; ++p )
             ++n;
     }
     struct iovec * vec = (struct iovec *)alloca(sizeof(struct iovec) * n);
-    const char * const * p = args;
+    char * const * p = args;
     for ( int i = 0; i < n; ++p, ++i )
     {
         vec[i].iov_base = (caddr_t)*p;

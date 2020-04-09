@@ -1,5 +1,4 @@
-// portable pty-preparser for wide range of compilers (gcc,HPaCC,SunCC,IBMxlC)
-#ifdef arch_linux
+#if defined(arch_linux) || defined(arch_Linux)
 # define _GNU_SOURCE
 # define _XOPEN_SOURCE
 # define _XOPEN_SOURCE_EXTENDED
@@ -40,14 +39,14 @@ extern "C" {
 #include <sys/wait.h>
 #include <sys/time.h>
 
-#include "ptyrun.h"
 #include "output.h"
+#include "ptyrun.h"
 
 int verbose = 1;
 
-void show_params(const char * const * argv, int fd)
+void show_params(char * const * argv, int fd)
 {
-    for (const char * const * p = argv; *p; ++p)
+    for (char * const * p = argv; *p; ++p)
     {
         if ( p == argv )
             write(fd, "'", 1);
@@ -231,48 +230,63 @@ struct child_stream
     char * base, * line, * p, * eol;
     int size;
     int hangup;
-    
-    child_stream(): base(0), line(0), p(0), eol(0), size(0),hangup(0) {}
-    ~child_stream() { free(base); }
-    
-    int put(char c)
-    {
-        checkbuf();
-        *p++ = c;
-        eol = p;
-        return c;
-    }
-    void checkbuf()
-    {
-        if ( p - base + 1 > size )
-        {
-            int offs = p - base;
-            size += 512;
-            base = (char*)realloc(base, size);
-            eol = p = base + offs;
-        }
-    }
-    int readch(int fd)
-    {
-        char ch;
-        int rc = read(fd, &ch, 1);
-        if ( 1 == rc )
-            put(ch);
-        return rc;
-    }
-    char last() const { return p > base ? p[-1]: '\0'; }
-    
-    void write_down()
-    {
-        put(0); // null-terminator for the line
-        line = base;
-        p = base;
-    }
-    void reset_line() { line = 0; eol = p;}
-    
-    int poll_child(pollfd&);
 };
 
+static void child_stream_init(struct child_stream *strm)
+{
+    *strm = (struct child_stream){};
+}
+
+static void child_stream_destroy(struct child_stream *strm)
+{
+    free(strm->base);
+}
+
+static void child_stream_checkbuf(struct child_stream *strm)
+{
+    if ( strm->p - strm->base + 1 > strm->size )
+    {
+        int offs = strm->p - strm->base;
+        strm->size += 512;
+        strm->base = (char*)realloc(strm->base, strm->size);
+        strm->eol = strm->p = strm->base + offs;
+    }
+}
+
+static int child_stream_put(struct child_stream *strm, char c)
+{
+    child_stream_checkbuf(strm);
+    *strm->p++ = c;
+    strm->eol = strm->p;
+    return c;
+}
+
+static int child_stream_readch(struct child_stream *strm, int fd)
+{
+    char ch;
+    int rc = read(fd, &ch, 1);
+    if ( 1 == rc )
+        child_stream_put(strm, ch);
+    return rc;
+}
+
+static char child_stream_last(const struct child_stream *strm)
+{
+    return strm->p > strm->base ? strm->p[-1]: '\0';
+}
+
+static void child_stream_write_down(struct child_stream *strm)
+{
+    child_stream_put(strm, 0); // null-terminator for the line
+    strm->line = strm->base;
+    strm->p = strm->base;
+}
+
+static void child_stream_reset_line(struct child_stream *strm)
+{
+    strm->line = 0;
+    strm->eol = strm->p;
+}
 
 #if defined(arch_hpux10) || defined(arch_gcchpux)
 // there is no clear statement in which cases poll(2) on HP-UX
@@ -283,25 +297,25 @@ struct child_stream
 #define POLLMASK POLLIN
 #endif
 
-int child_stream::poll_child(pollfd & pf)
+static int child_stream_poll_child(struct child_stream *strm, struct pollfd *pfd)
 {
     int rc = 0;
     
-    if ( pf.revents & POLLMASK )
+    if ( pfd->revents & POLLMASK )
     {
         // write(2, "+", 1);
-        if ( (rc = readch(pf.fd)) <= 0 )
+        if ( (rc = child_stream_readch(strm, pfd->fd)) <= 0 )
         {
             int err = errno;
 #if defined(arch_hpux10)
-            if ( !isatty(pf.fd) && 0 == rc && 0 == err )
+            if ( !isatty(pfd->fd) && 0 == rc && 0 == err )
             {
                 // hp-ux: read(2) return 0 and sets errno to zero if
                 // the _pipe_ where it have been reading from is closed.
                 // It is all right. But the damn thing doesn't do
                 // anything if the channel is pty! One must check
                 // if the child still around.
-                write_down();
+                child_stream_write_down(strm);
                 return -1;
             }
 #elif defined(arch_sparcOS5) || defined(__sun__)
@@ -318,49 +332,49 @@ int child_stream::poll_child(pollfd & pf)
             
             // linux: error reading from channel
             // hp-ux, sun: error or eof
-            write_down();
+            child_stream_write_down(strm);
             return -1;
         }
-        if ( hangup )
+        if ( strm->hangup )
             return -1;
-        if ( '\n' == last() )
-            write_down();
+        if ( '\n' == child_stream_last(strm) )
+            child_stream_write_down(strm);
         return 0;
     }
-    if ( pf.revents & (POLLHUP|POLLERR|POLLNVAL) )
+    if ( pfd->revents & (POLLHUP|POLLERR|POLLNVAL) )
     {
         // linux: posixly correct, these pollhup is sent to the process
         // by poll(2) if the polled channel gets closed.
         // sun: POLLHUP is NOT sent for ptys.
-        if ( p > base )
-            write_down();
-        hangup = 1;
+        if ( strm->p > strm->base )
+            child_stream_write_down(strm);
+        strm->hangup = 1;
         return -1;
     }
     return 0;
 }
 
-int do_buffer(child_stream & buf, pollfd & fds,
-              hook_t * hooks, int hcount, int id)
+int do_buffer(struct child_stream *buf, struct pollfd *fds,
+              struct hook *hooks, int hcount, int id)
 {
-    int read_ok = buf.poll_child(fds);
+    int read_ok = child_stream_poll_child(buf, fds);
     
-    if ( buf.line )
+    if ( buf->line )
     {
-        int llen = buf.eol - buf.line - 1 /* \0 */;
-        if ( llen >= 2 && !strcmp(buf.eol - 3, "\r\n") )
+        int llen = buf->eol - buf->line - 1 /* \0 */;
+        if ( llen >= 2 && !strcmp(buf->eol - 3, "\r\n") )
         {
-            buf.eol[-3] = '\n';
-            buf.eol[-2] = '\0';
+            buf->eol[-3] = '\n';
+            buf->eol[-2] = '\0';
             --llen;
         }
         // line ready. Run the hooks over it.
         for ( int i = 0; i < hcount; ++i )
         {
-            if ( (*hooks[i].proc)(id, buf.line, llen) == 0 )
+            if ( (*hooks[i].proc)(id, buf->line, llen) == 0 )
                 break;
         }
-        buf.reset_line();
+        child_stream_reset_line(buf);
     }
     if ( read_ok < 0 )
         return -1;
@@ -369,9 +383,9 @@ int do_buffer(child_stream & buf, pollfd & fds,
 
 pid_t child = 0;
 
-int ptyrun(char* argv[], hook_t * hooks, int hcount, int merge)
+int ptyrun(char* argv[], struct hook * hooks, int hcount, int merge)
 {
-    pollfd fds[2];
+    struct pollfd fds[2];
 #if defined(arch_rs6000) || defined(arch_gccrs6000)
     fds[0].fd = spawn_pty(argv, &child, merge ? 0: (int*)&fds[1].fd);
 #else
@@ -388,7 +402,7 @@ int ptyrun(char* argv[], hook_t * hooks, int hcount, int merge)
     if ( fds[0].fd < 0 )
         return -1;
     
-    child_stream buf, ebuf;
+    struct child_stream buf, ebuf;
     int rc, wok;
 #if defined(arch_rs6000) || defined(arch_gccrs6000)
     int timeout = 300;
@@ -396,20 +410,23 @@ int ptyrun(char* argv[], hook_t * hooks, int hcount, int merge)
     int timeout = 1000;
 #endif
     wok = 0;
-    pollfd * pfd = fds;
+    struct pollfd * pfd = fds;
     int cfd = merge ? 1: 2;
+
+    child_stream_init(&buf);
+    child_stream_init(&ebuf);
 _restart:
     while ( cfd > 0 && (rc = poll(pfd, cfd, timeout)) >= 0 )
     {
         if ( 0 == merge && cfd > 1 &&
-             do_buffer(ebuf, fds[1], hooks, hcount, 2) )
+             do_buffer(&ebuf, &fds[1], hooks, hcount, 2) )
         {
             --cfd;
             
             if ( verbose )
                 outputf(1, "[%d] %d closed stderr\n", getpid(), child);
         }
-        if ( do_buffer(buf,  fds[0], hooks, hcount, 1) )
+        if ( do_buffer(&buf, &fds[0], hooks, hcount, 1) )
         {
             ++pfd;
             --cfd;
@@ -445,5 +462,7 @@ _restart:
     close(fds[0].fd); // close master pty
     if ( !merge )
         close(fds[1].fd); // close error pipe
+    child_stream_destroy(&ebuf);
+    child_stream_destroy(&buf);
     return status;
 }

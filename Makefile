@@ -2,12 +2,12 @@
 # Colorizing log output
 #
 target = colog
-sources :=         \
-    main.cc        \
-    ptyrun.cc      \
-    output.cc      \
-    match.cc       \
-    syslogmsgs.cc
+sources :=        \
+    main.c        \
+    syslogmsgs.c  \
+    ptyrun.c      \
+    output.c      \
+    match.c       \
 
 odir := O
 ofiles = $(patsubst %.cc,$(odir)/%.o,$(patsubst %.c,$(odir)/%.o,$(sources)))
@@ -16,7 +16,7 @@ CC := gcc
 CXX := g++
 CFLAGS := -Wall -ggdb -O3
 CXXFLAGS := -Wall -ggdb -O3
-CPPFLAGS := -DTEST_CODE -Darch_$(uname -s)
+CPPFLAGS := -DTEST_CODE -Darch_$(shell uname -s)
 LDFLAGS := -Wall -ggdb -O3
 LDLIBS :=
 PKG_CFLAGS =
@@ -25,7 +25,7 @@ PKG_LIBS =
 build: $(target)
 
 $(target): $(ofiles)
-	$(CXX) $^ $(LOADLIBES) $(PKG_LIBS) $(LDLIBS) $(LOADLIBES) -o $@
+	$(LINK.o) $^ $(LOADLIBES) $(PKG_LIBS) $(LDLIBS) $(LOADLIBES) -o $@
 
 $(odir)/%.o: %.c
 	@mkdir -p '$(odir)'

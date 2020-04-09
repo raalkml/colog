@@ -3,7 +3,7 @@
 #define __output_h__ 1
 
 // n could be -1 (count args, must end with 0 than)
-int output(int fd, const char * const * args, int n);
+int output_args(int fd, char * const * args, int n);
 // arguments must end with 0 (\0-terminated strings only)
 int outputs(int fd, const char * arg0, ...);
 // see fprintf(3)

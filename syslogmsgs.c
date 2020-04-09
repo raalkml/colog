@@ -1,15 +1,14 @@
 #include "parsers.h"
 #include <string.h>
 
-/* sample: "main.cc:22:" ... */
-static void * syslogdate =
-match_prepare("^... +[0-9]+ [0-9]+:[0-9]+:[0-9]+ ");
-
-
-
 int syslogmsgs(int fd, char * line, int len)
 {
+    static void *syslogdate;
     int pos, length;
+
+    if (!syslogdate)
+        syslogdate = match_prepare("^... +[0-9]+ [0-9]+:[0-9]+:[0-9]+ ");
+
 	if ( len > 0 && line[len-1] == '\n' )
 		--len;
 
