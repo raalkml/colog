@@ -1,0 +1,18 @@
+Apr  5 10:31:43 pflmari postfix/master[3286]: terminating on signal 15
+Apr  6 08:52:37 pflmari postfix/master[3275]: daemon started -- version 3.4.10, configuration /etc/postfix
+Apr  6 08:52:48 pflmari postfix/master[3275]: reload -- version 3.4.10, configuration /etc/postfix
+Apr  6 08:52:48 pflmari postfix/master[3275]: reload -- version 3.4.10, configuration /etc/postfix
+Apr  6 08:53:02 pflmari postfix/master[3275]: reload -- version 3.4.10, configuration /etc/postfix
+Apr  6 08:53:40 pflmari postfix/master[3275]: terminating on signal 15
+Apr  6 08:53:40 pflmari postfix/master[4540]: daemon started -- version 3.4.10, configuration /etc/postfix
+Apr  6 08:54:20 pflmari postfix/smtpd[4646]: connect from localhost[127.0.0.1]
+Apr  6 08:54:20 pflmari postfix/smtpd[4646]: 54D6B804F3: client=localhost[127.0.0.1]
+Apr  6 08:54:20 pflmari postfix/cleanup[4649]: 54D6B804F3: message-id=<20200404141400.3772-1-oscar.carter@gmx.com>
+Apr  6 08:54:20 pflmari postfix/qmgr[4549]: 54D6B804F3: from=<driverdev-devel-bounces@linuxdriverproject.org>, size=9014, nrcpt=1 (queue active)
+Apr  6 08:54:20 pflmari postfix/local[4650]: 54D6B804F3: to=<ari@localhost>, relay=local, delay=0.09, delays=0.08/0.01/0/0.01, dsn=2.0.0, status=sent (delivered to command: exec /usr/bin/procmail -f -)
+Apr  6 08:54:20 pflmari postfix/qmgr[4549]: 54D6B804F3: removed
+Apr  6 08:54:20 pflmari postfix/smtpd[4646]: 7BD6A804F3: client=localhost[127.0.0.1]
+Apr  6 08:54:20 pflmari postfix/cleanup[4649]: 7BD6A804F3: message-id=<20200404141400.3772-2-oscar.carter@gmx.com>
+Apr  6 08:54:20 pflmari postfix/qmgr[4549]: 7BD6A804F3: from=<driverdev-devel-bounces@linuxdriverproject.org>, size=9209, nrcpt=1 (queue active)
+Apr  6 08:54:20 pflmari postfix/local[4650]: 7BD6A804F3: to=<ari@localhost>, relay=local, delay=0.13, delays=0.13/0/0/0.01, dsn=2.0.0, status=sent (delivered to command: exec /usr/bin/procmail -f -)
+Apr  6 08:54:20 pflmari postfix/qmgr[4549]: 7BD6A804F3: removed
