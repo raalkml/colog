@@ -1,3 +1,5 @@
+Mar 24 18:46:59 pflmari postfix/smtp[21017]: CDEC4804FB: to=<marc.rosskopf@cetitec.com>, relay=none, delay=15, delays=0.02/15/0.08/0, dsn=4.3.5, status=deferred (Host or domain name not found. Name service error for name=PFWSEXCHANGE.corp.cetitec.com type=A: Host not found)
+Mar 26 11:36:26 pflmari postfix/smtp[22317]: 5832D804FB: to=<kuninori.morimoto.gx@renesas.com>, relay=PFWSEXCHANGE.corp.cetitec.com[10.10.1.99]:587, delay=92, delays=0.04/91/0.37/0.02, dsn=4.4.2, status=deferred (host PFWSEXCHANGE.corp.cetitec.com[10.10.1.99] said: 421 4.4.2 Message submission rate for this client has exceeded the configured limit (in reply to MAIL FROM command))
 Apr  5 10:31:43 pflmari postfix/master[3286]: terminating on signal 15
 Apr  6 08:52:37 pflmari postfix/master[3275]: daemon started -- version 3.4.10, configuration /etc/postfix
 Apr  6 08:52:48 pflmari postfix/master[3275]: reload -- version 3.4.10, configuration /etc/postfix

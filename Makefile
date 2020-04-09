@@ -2,12 +2,13 @@
 # Colorizing log output
 #
 target = colog
-sources :=        \
-    syslogmsgs.c  \
-    main.c        \
-    ptyrun.c      \
-    output.c      \
-    match.c       \
+sources :=         \
+    syslogmsgs.c   \
+    regex_colors.c \
+    main.c         \
+    ptyrun.c       \
+    output.c       \
+    match.c        \
 
 odir := O
 ofiles = $(patsubst %.cc,$(odir)/%.o,$(patsubst %.c,$(odir)/%.o,$(sources)))
