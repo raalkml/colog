@@ -2,8 +2,11 @@
 # define _GNU_SOURCE
 # define _XOPEN_SOURCE
 # define _XOPEN_SOURCE_EXTENDED
-# include <stropts.h>
+# include <sys/ioctl.h>
 # include <sys/termios.h>
+#ifdef HAVE_STREAMS
+# include <sys/stropts.h>
+#endif
 # include <stdlib.h>
 
 #elif defined(arch_sparcOS5) || defined(arch_gccsparcOS5)
@@ -162,13 +165,14 @@ _found_pty:
             
             if ( tty < 0 )
                 exit(ENOTTY);
-            
+#ifdef HAVE_STREAMS
             ioctl(tty, I_PUSH, "ptem");
 #if !(defined(arch_rs6000) || defined(arch_gccrs6000))
             // aix hangs here
             ioctl(tty, I_PUSH, "ldterm");
 #endif
             ioctl(tty, I_PUSH, "ttcompat");
+#endif
         }
         // redirect stdin into /dev/null
         int null = open("/dev/null", O_RDONLY);
