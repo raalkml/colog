@@ -189,7 +189,7 @@ int main(int argc, char **argv)
 			outputs(1, "\n", 0);
 		}
 	}
-	if (!*argv)
+	if (!argv[1])
 		usage(myname);
 	signal(SIGINT, interrupt);
 	signal(SIGTERM, terminate);
