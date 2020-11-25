@@ -1,4 +1,7 @@
-#if defined(arch_linux) || defined(arch_Linux)
+#if defined(arch_Linux) && !defined(arch_linux)
+#define arch_linux 1
+#endif
+#if defined(arch_linux)
 # define _GNU_SOURCE
 # define _XOPEN_SOURCE
 # define _XOPEN_SOURCE_EXTENDED
@@ -88,6 +91,7 @@ int spawn_pty(char * const * argv, pid_t * pid, int * errfd)
             nopty = 1;
 	}
 #else // HP-UX and others
+#warning "Using old method of PTY allocation"
     const char *c1, *c2;
     char pty_name[] = "/dev/pty??";
     char tty_name[] = "/dev/tty??";
@@ -118,7 +122,8 @@ _found_pty:
     if ( nopty ) // fall back to pipe
     {
         int hh[2];
-        
+
+	fprintf(stderr, "NO PTY, using pipe as a fallback\n");
         if ( pipe(hh) < 0 )
             return -1; // no chance
         
