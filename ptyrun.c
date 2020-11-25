@@ -413,10 +413,11 @@ int ptyrun(char* argv[], struct hook * hooks, int hcount, int merge)
     
     struct child_stream buf, ebuf;
     int rc = -1, wok;
+    int timeout = -1;
 #if defined(arch_rs6000) || defined(arch_gccrs6000)
-    int timeout = 300;
+#define set_polling_timeout() do { timeout = 300; } while(0)
 #else
-    int timeout = 1000;
+#define set_polling_timeout() do { timeout = 1000; } while(0)
 #endif
     wok = 0;
     struct pollfd * pfd = fds;
@@ -431,7 +432,7 @@ _restart:
              do_buffer(&ebuf, &fds[1], hooks, hcount, 2) )
         {
             --cfd;
-            
+            set_polling_timeout();
             if ( verbose )
                 outputf(1, "[%d] %d closed stderr\n", getpid(), child);
         }
@@ -439,14 +440,14 @@ _restart:
         {
             ++pfd;
             --cfd;
-            
+            set_polling_timeout();
             if ( verbose )
                 outputf(1, "[%d] %d closed stdout\n", getpid(), child);
         }
         if ( cfd && rc )
             // If there is at least one handle, and it wasn't timed out.
             continue;
-        
+
         if ( (rc = waitpid(child, &wok, cfd ? WNOHANG: 0)) == child )
         {
             if ( WIFEXITED(wok) )
