@@ -11,11 +11,17 @@
 # include <sys/stropts.h>
 #endif
 # include <stdlib.h>
+#ifndef HAVE_PTMX
+#define HAVE_PTMX 1
+#endif
 
 #elif defined(arch_sparcOS5) || defined(arch_gccsparcOS5)
 # define _XOPEN_SOURCE_EXTENDED
 # include <stropts.h>
 # include <sys/termios.h>
+#ifndef HAVE_PTMX
+#define HAVE_PTMX 1
+#endif
 
 #elif defined(arch_hpux10) || defined(arch_gcchpux)
 # define _XOPEN_SOURCE_EXTENDED
@@ -75,7 +81,7 @@ int spawn_pty(char * const * argv, pid_t * pid, int * errfd)
     // will fallback to pipes if allocation of pty is failed
     int nopty = 0;
 
-#if defined(arch_sparcOS5) || defined(arch_linux) || defined(arch_gccsparcOS5)
+#if HAVE_PTMX
     // open the STREAMS, clone device /dev/ptmx (master pty)
     master = open("/dev/ptmx", O_RDWR);
     
@@ -215,7 +221,7 @@ _found_pty:
         close(tty);
     if ( errfd )
         close(errtty);
-#if defined(arch_sparcOS5) || defined(arch_linux)
+#if HAVE_PTMX
     free(ttydev);
 #endif
     // set non-blocking mode
