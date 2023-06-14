@@ -25,9 +25,11 @@ static struct regex_color colors[] = {
 			esc_ _default _esc,
 		}
 	},
+#define UNIX_TIMESTAMP "...[ \t]*[0-9]+[ \t]+..:..:.. "
+#define SYSTEMD_TIMESTAMP "[0-9]+-[0-9]+-[0-9]+T..:..:..\\.[0-9]+\\+..:.. "
 	{ /* postfix deferred */
 		STDIN_FILENO,
-		"^(...[ \t]*[0-9]+[ \t]+..:..:.. )([^ \t]+ )(postfix/smtp)(\\[[0-9]+\\])(:)(.*, status=deferred )(.*)",
+		"^("UNIX_TIMESTAMP"|"SYSTEMD_TIMESTAMP")(postfix/smtp)(\\[[0-9]+\\])(:)(.*, status=deferred )(.*)",
 		{
 			esc_ cyan _esc,
 			esc_ yellow _esc,
@@ -41,7 +43,7 @@ static struct regex_color colors[] = {
 	},
 	{ /* syslog facility with a pid */
 		STDIN_FILENO,
-		"^(...[ \t]*[0-9]+[ \t]+..:..:.. )([^ \t]+ )([^ \t]+)(\\[[0-9]+\\])(:)(.*)",
+		"^("UNIX_TIMESTAMP"|"SYSTEMD_TIMESTAMP")([^ \t]+ )([^ \t]+)(\\[[0-9]+\\])(:)(.*)",
 		{
 			esc_ cyan _esc,
 			esc_ yellow _esc,
@@ -54,7 +56,7 @@ static struct regex_color colors[] = {
 	},
 	{ /* syslog facility without a pid */
 		STDIN_FILENO,
-		"^(...[ \t]*[0-9]+[ \t]+..:..:.. )([^ \t]+ )([^ \t[]+):(.*)",
+		"^("UNIX_TIMESTAMP"|"SYSTEMD_TIMESTAMP")([^ \t]+ )([^ \t[]+):(.*)",
 		{
 			esc_ cyan _esc,
 			esc_ yellow _esc,
