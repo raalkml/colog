@@ -18,7 +18,10 @@
 const char *myname;
 static char *external_filter;
 static pid_t external_filter_pid = -1;
+static pid_t child = 0;
 int restart = 0;
+int verbose = 1;
+
 
 void interrupt(int sig)
 {
@@ -199,7 +202,7 @@ int main(int argc, char **argv)
 	int status = 0;
 
 	do {
-		status = ptyrun(argv + optind, hooks, sizeof(hooks)/sizeof(*hooks), merge);
+		status = ptyrun(argv + optind, hooks, sizeof(hooks)/sizeof(*hooks), merge, &child);
 		if (verbose && restart) {
 			char num[32];
 			*number(num, num+32, status, 10) = '\0';

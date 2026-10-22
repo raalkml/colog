@@ -59,7 +59,7 @@ extern "C" {
 #include "output.h"
 #include "ptyrun.h"
 
-int verbose = 1;
+extern int verbose;
 
 void show_params(char * const * argv, int fd)
 {
@@ -401,15 +401,13 @@ int do_buffer(struct child_stream *buf, struct pollfd *fds,
     return 0;
 }
 
-pid_t child = 0;
-
-int ptyrun(char* argv[], struct hook * hooks, int hcount, int merge)
+int ptyrun(char* argv[], struct hook * hooks, int hcount, int merge, pid_t *child)
 {
     struct pollfd fds[2];
 #if defined(arch_rs6000) || defined(arch_gccrs6000)
-    fds[0].fd = spawn_pty(argv, &child, merge ? 0: (int*)&fds[1].fd);
+    fds[0].fd = spawn_pty(argv, child, merge ? 0: (int*)&fds[1].fd);
 #else
-    fds[0].fd = spawn_pty(argv, &child, merge ? 0: &fds[1].fd);
+    fds[0].fd = spawn_pty(argv, child, merge ? 0: &fds[1].fd);
 #endif
 
 #if !defined(arch_hpux10)
@@ -445,7 +443,7 @@ _restart:
             --cfd;
             set_polling_timeout();
             if ( verbose )
-                outputf(1, "[%d] %d closed stderr\n", getpid(), child);
+                outputf(1, "[%d] %d closed stderr\n", getpid(), *child);
         }
         if ( do_buffer(&buf, &fds[0], hooks, hcount, 1) )
         {
@@ -453,24 +451,24 @@ _restart:
             --cfd;
             set_polling_timeout();
             if ( verbose )
-                outputf(1, "[%d] %d closed stdout\n", getpid(), child);
+                outputf(1, "[%d] %d closed stdout\n", getpid(), *child);
         }
         if ( cfd && rc )
             // If there is at least one handle, and it wasn't timed out.
             continue;
 
-        if ( (rc = waitpid(child, &wok, cfd ? WNOHANG: 0)) == child )
+        if ( (rc = waitpid(*child, &wok, cfd ? WNOHANG: 0)) == *child )
         {
             if ( WIFEXITED(wok) )
             {
                 status = WEXITSTATUS(wok);
                 if ( verbose )
-                    outputf(1, "[%d] %d exited: %d\n", getpid(), child, status);
+                    outputf(1, "[%d] %d exited: %d\n", getpid(), *child, status);
             }
             if ( WIFSIGNALED(wok) )
             {
                 if ( verbose )
-                    outputf(1, "[%d] %d signaled\n", getpid(), child);
+                    outputf(1, "[%d] %d signaled\n", getpid(), *child);
                 // killed by a signal (ours or someones else)
                 status = -1;
             }
@@ -487,3 +485,4 @@ _restart:
     child_stream_destroy(&buf);
     return status;
 }
+
