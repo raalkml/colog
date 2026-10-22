@@ -145,7 +145,7 @@ static void usage(const char *argv0)
 	outputs(1,
 		argv0, ": no command given\n",
 		argv0, ": an output preprocessor\n",
-		argv0, " [-sv -c <filter command> --] command ...\n"
+		argv0, " [-v -c <filter command> --] command ...\n"
 		" -v  verbose\n"
 		" -c  set the filter command (it will be responsible"
 		" for all unhandled output);\n"
