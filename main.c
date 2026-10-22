@@ -146,12 +146,9 @@ static void usage(const char *argv0)
 		argv0, ": no command given\n",
 		argv0, ": an output preprocessor\n",
 		argv0, " [-sv -c <filter command> --] command ...\n"
-		" -s  separate stdout and stderr into different streams\n"
 		" -v  verbose\n"
 		" -c  set the filter command (it will be responsible"
 		" for all unhandled output);\n"
-		" -R  restart the command after it has finished\n"
-		"     the command is executed through your $SHELL.\n"
 		" \"--\" can be used to separate the command beginning\n"
 		"        with dash from the parameters. Everything after\n"
 		"        the dashes will be passed to the execvp(3).\n",
@@ -161,19 +158,16 @@ static void usage(const char *argv0)
 
 int main(int argc, char **argv)
 {
-	int merge = 1, opt;
+	int opt;
 	char *argv0 = *argv;
 
 	verbose = 0;
 	if (strrchr(argv0, '/'))
 		myname = strrchr(argv0, '/') + 1;
-	while ((opt = getopt(argc, argv, "vsRc:")) != -1)
+	while ((opt = getopt(argc, argv, "vsc:")) != -1)
 		switch (opt) {
 		case 'v':
 			++verbose;
-			break;
-		case 's':
-			merge = 1;
 			break;
 		case 'c':
 			external_filter = optarg;
@@ -184,8 +178,6 @@ int main(int argc, char **argv)
 
 	if (verbose) {
 		outputs(1, myname, ": verbose mode\n", 0);
-		if (!merge)
-			outputs(1,myname, ": separating stdout and stderr for child\n",0);
 		if (*argv) {
 			outputs(1, myname, ": parameters(concatenated): ", 0);
 			output_args(1, argv, -1);
@@ -202,7 +194,7 @@ int main(int argc, char **argv)
 	int status = 0;
 
 	do {
-		status = ptyrun(argv + optind, hooks, sizeof(hooks)/sizeof(*hooks), merge, &child);
+		status = ptyrun(argv + optind, hooks, sizeof(hooks)/sizeof(*hooks), 1, &child);
 		if (verbose && restart) {
 			char num[32];
 			*number(num, num+32, status, 10) = '\0';
