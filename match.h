@@ -29,33 +29,33 @@ int is_pathname(const char * str1, int maxlen /* = -1 */, const char * terms /* 
 #if UNDEF
 struct textblk
 {
-	const char * p;
-	int l;
-	struct textblk * next;
+    const char * p;
+    int l;
+    struct textblk * next;
 };
 struct textinfo
 {
-	const char * text;
-	int size;
-	struct textblk * head, * tail;
+    const char * text;
+    int size;
+    struct textblk * head, * tail;
 
-	textinfo(const char * txt, int len);
-	textblk * mark(int pos, int len, const char *);
-	textblk * mark(const char * pfx, const char * rx, const char * sfx);
-	int mark_all(const char * pfx, const char * rx, const char * sfx);
+    textinfo(const char * txt, int len);
+    textblk * mark(int pos, int len, const char *);
+    textblk * mark(const char * pfx, const char * rx, const char * sfx);
+    int mark_all(const char * pfx, const char * rx, const char * sfx);
 };
 
 
 int xxx(char * line)
 {
-	textinfo ti(line, strlen(line));
-	ti.mark(0, ti.size, DEFAULT_COLOR);
-	ti.mark(esc_ cyan _esc,
-			"^[A-Z][a-z][a-z] +[0-9]+.*:[0-9][0-9]",
-			DEFAULT_COLOR);
-	ti.mark_all(esc_ bold _esc,
-				"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+",
-				esc_ bold_off _esc);
-	ti.write(fd);
+    textinfo ti(line, strlen(line));
+    ti.mark(0, ti.size, DEFAULT_COLOR);
+    ti.mark(esc_ cyan _esc,
+            "^[A-Z][a-z][a-z] +[0-9]+.*:[0-9][0-9]",
+            DEFAULT_COLOR);
+    ti.mark_all(esc_ bold _esc,
+                "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+",
+                esc_ bold_off _esc);
+    ti.write(fd);
 }
 #endif /* MATCH_H */
