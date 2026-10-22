@@ -1,3 +1,8 @@
+/*
+ * A log colorizer for systems with PTY support
+ *
+ * Escape sequences for ANSI-compatible terminals
+ */
 #ifndef __escape_seq_h__
 #define __escape_seq_h__ "xterm"
 

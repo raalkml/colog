@@ -1,3 +1,8 @@
+/*
+ * A log colorizer for systems with PTY support
+ *
+ * Compatibility routines for PTY handling.
+ */
 #if defined(arch_Linux) && !defined(arch_linux)
 #define arch_linux 1
 #endif

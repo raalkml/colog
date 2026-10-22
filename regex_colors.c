@@ -1,3 +1,8 @@
+/*
+ * A log colorizer for systems with PTY support
+ *
+ * Regex patterns and colors. This is the file to modify to add patterns.
+ */
 #define _GNU_SOURCE
 #include <unistd.h>
 #include <stdio.h>
