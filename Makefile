@@ -10,7 +10,7 @@ sources :=         \
     match.c        \
 
 odir := O
-ofiles = $(patsubst %.cc,$(odir)/%.o,$(patsubst %.c,$(odir)/%.o,$(sources)))
+ofiles = $(patsubst %.c,$(odir)/%.c.o,$(sources))
 
 CC := gcc
 CXX := g++
@@ -27,13 +27,9 @@ build: $(target)
 $(target): $(ofiles)
 	$(LINK.o) $^ $(LOADLIBES) $(PKG_LIBS) $(LDLIBS) $(LOADLIBES) -o $@
 
-$(odir)/%.o: %.c
+$(odir)/%.c.o: %.c
 	@mkdir -p '$(odir)'
 	$(COMPILE.c) $(OUTPUT_OPTION) $(PKG_CFLAGS) $(CPPFLAGS) $(CFLAGS) $<
-
-$(odir)/%.o: %.cc
-	@mkdir -p '$(odir)'
-	$(COMPILE.cc) $(OUTPUT_OPTION) $(PKG_CFLAGS) $(CPPFLAGS) $(CXXFLAGS) $<
 
 rebuild: clean
 	$(MAKE) build
@@ -50,18 +46,14 @@ install:
 tags:
 	ctags $(sources) *.h *.hh *.hpp
 
-$(odir)/%.d: %.c
+$(odir)/%.o.d: %.c
 	@mkdir -p '$(odir)'
-	$(CC) -MM -o $@ $< $(CPPFLAGS)
-
-$(odir)/%.d: %.cc
-	@mkdir -p '$(odir)'
-	$(CC) -MM -o $@ $< $(CPPFLAGS)
+	$(CC) -MM -MT'$(odir)/$<.o' -o $@ $< $(CPPFLAGS)
 
 .PHONY: tags build rebuild depclean clean distclean install
 
 ifneq (clean,$(findstring clean,$(MAKECMDGOALS)))
--include $(patsubst %.cc,$(odir)/%.d,$(patsubst %.c,$(odir)/%.d,$(sources)))
+-include $(patsubst %.c,$(odir)/%.o.d,$(sources))
 endif
 
 .PHONY: test
