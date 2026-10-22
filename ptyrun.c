@@ -30,9 +30,7 @@
 
 #elif defined(arch_hpux10) || defined(arch_gcchpux)
 # define _XOPEN_SOURCE_EXTENDED
-extern "C" {
 # include <stropts.h>
-};
 # include <sys/termios.h>
 
 #elif defined(arch_rs6000) || defined(arch_gccrs6000)
@@ -90,17 +88,17 @@ int spawn_pty(char * const * argv, pid_t * pid, int * errfd)
     // open the STREAMS, clone device /dev/ptmx (master pty)
     master = open("/dev/ptmx", O_RDWR);
 
-	if ( master < 0 )
+    if ( master < 0 )
         nopty = 1;
     else
     {
-	    grantpt(master);  // change slave permissions
-	    unlockpt(master); // unlock slave
-	    ttydev = strdup(ptsname(master)); // get slave's name
+        grantpt(master);  // change slave permissions
+        unlockpt(master); // unlock slave
+        ttydev = strdup(ptsname(master)); // get slave's name
 
         if ( !ttydev  )
             nopty = 1;
-	}
+    }
 #else // HP-UX and others
 #warning "Using old method of PTY allocation"
     const char *c1, *c2;
@@ -134,7 +132,7 @@ _found_pty:
     {
         int hh[2];
 
-	fprintf(stderr, "NO PTY, using pipe as a fallback\n");
+        fprintf(stderr, "NO PTY, using pipe as a fallback\n");
         if ( pipe(hh) < 0 )
             return -1; // no chance
 
