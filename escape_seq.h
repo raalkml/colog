@@ -3,8 +3,8 @@
  *
  * Escape sequences for ANSI-compatible terminals
  */
-#ifndef __escape_seq_h__
-#define __escape_seq_h__ "xterm"
+#ifndef ESCAPE_SEQ_H
+#define ESCAPE_SEQ_H 1
 
 #define esc_ "\x1b["
 // separate through ';'
@@ -44,4 +44,4 @@
 #define xterm_title_ "\e]2;"
 #define _xterm_esc "\a"
 
-#endif
+#endif /* ESCAPE_SEQ_H */

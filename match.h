@@ -3,8 +3,8 @@
  *
  * Text matching routines.
  */
-#ifndef __match_h__
-#define __match_h__ 1
+#ifndef MATCH_H
+#define MATCH_H 1
 
 /* re */ void * match_prepare(const char * expr);
 
@@ -58,4 +58,4 @@ int xxx(char * line)
 				esc_ bold_off _esc);
 	ti.write(fd);
 }
-#endif
+#endif /* MATCH_H */

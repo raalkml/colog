@@ -3,8 +3,8 @@
  *
  * Compatibility routines for PTY handling.
  */
-#ifndef _PTYRUN_H_
-#define _PTYRUN_H_ 1
+#ifndef PTYRUN_H
+#define PTYRUN_H 1
 #include <unistd.h>
 
 struct hook
@@ -16,4 +16,4 @@ struct hook
 int ptyrun(char *argv[], struct hook *hooks, int hook_count, int merge, pid_t *child);
 void show_params(char * const *argv, int fd);
 
-#endif /* _PTYRUN_H_ */
+#endif /* PTYRUN_H */

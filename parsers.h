@@ -3,8 +3,8 @@
  *
  * Routines to process the text input into the terminal output.
  */
-#ifndef __parsers_h__
-#define __parsers_h__ 1
+#ifndef PARSERS_H
+#define PARSERS_H 1
 
 #include "output.h" // output routines (error() & warning() also)
 #include "match.h"  // search/match routines (gnu regex)
@@ -19,4 +19,4 @@
 
 int regex_colors(int fd, char *line, int len);
 
-#endif // __parsers_h__
+#endif // PARSERS_H

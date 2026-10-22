@@ -3,8 +3,8 @@
  *
  * Terminal output helpers.
  */
-#ifndef __output_h__
-#define __output_h__ 1
+#ifndef OUTPUT_H
+#define OUTPUT_H 1
 
 // n could be -1 (count args, must end with 0 than)
 int output_args(int fd, char * const * args, int n);
@@ -55,4 +55,4 @@ int warning(int fd,
                   description, desclen);
 }
 
-#endif // __output_h__
+#endif // OUTPUT_H
