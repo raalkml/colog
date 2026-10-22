@@ -164,7 +164,7 @@ int main(int argc, char **argv)
 	verbose = 0;
 	if (strrchr(argv0, '/'))
 		myname = strrchr(argv0, '/') + 1;
-	while ((opt = getopt(argc, argv, "vsc:")) != -1)
+	while ((opt = getopt(argc, argv, "vc:")) != -1)
 		switch (opt) {
 		case 'v':
 			++verbose;
