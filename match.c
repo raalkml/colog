@@ -1,4 +1,8 @@
-// portable pty-preparser for wide range of compilers (gcc,HPaCC,SunCC,IBMxlC)
+/*
+ * A log colorizer for systems with PTY support
+ *
+ * Text matching routines.
+ */
 #define _GNU_SOURCE
 #include <unistd.h>
 #include <string.h>

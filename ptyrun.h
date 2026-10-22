@@ -1,3 +1,8 @@
+/*
+ * A log colorizer for systems with PTY support
+ *
+ * Compatibility routines for PTY handling.
+ */
 #ifndef _PTYRUN_H_
 #define _PTYRUN_H_ 1
 

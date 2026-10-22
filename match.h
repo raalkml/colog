@@ -1,4 +1,8 @@
-// text lookup routines
+/*
+ * A log colorizer for systems with PTY support
+ *
+ * Text matching routines.
+ */
 #ifndef __match_h__
 #define __match_h__ 1
 

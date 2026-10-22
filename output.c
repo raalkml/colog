@@ -1,4 +1,8 @@
-// portable pty-preparser for wide range of compilers (gcc,HPaCC,SunCC,IBMxlC)
+/*
+ * A log colorizer for systems with PTY support
+ *
+ * Terminal output helpers.
+ */
 #include <unistd.h>
 #include <stdarg.h>
 #include <string.h>

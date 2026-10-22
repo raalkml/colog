@@ -1,4 +1,8 @@
-// portable pty-preparser for wide range of compilers (gcc,HPaCC,SunCC,IBMxlC)
+/*
+ * A log colorizer for systems with PTY support
+ *
+ * Routines to process the text input into the terminal output.
+ */
 #ifndef __parsers_h__
 #define __parsers_h__ 1
 

@@ -1,6 +1,6 @@
-//
-// A log colorizer for systems with pty
-//
+/*
+ * A log colorizer for systems with PTY support
+ */
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
