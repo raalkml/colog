@@ -5,6 +5,7 @@
  */
 #ifndef _PTYRUN_H_
 #define _PTYRUN_H_ 1
+#include <unistd.h>
 
 struct hook
 {
@@ -12,11 +13,7 @@ struct hook
     int (*proc)(int fd_id /* 1 - stdin, 2 - stderr */, char *line, int len);
 };
 
-int ptyrun(char *argv[], struct hook *hooks, int hook_count, int merge);
+int ptyrun(char *argv[], struct hook *hooks, int hook_count, int merge, pid_t *child);
 void show_params(char * const *argv, int fd);
-
-extern int verbose;
-extern int restart;
-extern pid_t child;
 
 #endif /* _PTYRUN_H_ */
