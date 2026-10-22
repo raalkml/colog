@@ -1,0 +1,21 @@
+[package]
+name = "colog"
+version = "0.1.0"
+edition = "2024"
+
+[profile.dev]
+#panic = "abort"
+#debug-assertions = false
+#lto = true
+opt-level = 1
+
+[profile.release]
+#panic = "abort"   # Abort on panic (removes stack unwinding code)
+lto = true        # Link Time Optimization
+opt-level = "z"   # Optimize for size.
+strip = true      # Strip debug symbols from the binary.
+codegen-units = 1 # Reduce number of codegen units to increase optimizations.
+
+[dependencies]
+libc = "0.2.191"
+
