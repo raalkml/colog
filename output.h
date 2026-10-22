@@ -27,8 +27,8 @@ int print2(int fd,
     if ( sufflen > 0 && suffix[sufflen - 1] == '\n' )
         --sufflen;
     return output(fd,
-                  color1,           -1,  prefix, preflen, 
-                  color2,           -1,  suffix, sufflen, 
+                  color1,           -1,  prefix, preflen,
+                  color2,           -1,  suffix, sufflen,
                   esc_ normal _esc, -1, "\n", 1, 0, 0);
 }
 

@@ -79,17 +79,17 @@ int spawn_pty(char * const * argv, pid_t * pid, int * errfd)
 {
     char * ttydev = 0;
     int master = -1, tty = -1, errtty = -1;
-    
+
     if ( verbose )
         show_params(argv, 1);
-    
+
     // will fallback to pipes if allocation of pty is failed
     int nopty = 0;
 
 #if HAVE_PTMX
     // open the STREAMS, clone device /dev/ptmx (master pty)
     master = open("/dev/ptmx", O_RDWR);
-    
+
 	if ( master < 0 )
         nopty = 1;
     else
@@ -97,7 +97,7 @@ int spawn_pty(char * const * argv, pid_t * pid, int * errfd)
 	    grantpt(master);  // change slave permissions
 	    unlockpt(master); // unlock slave
 	    ttydev = strdup(ptsname(master)); // get slave's name
-        
+
         if ( !ttydev  )
             nopty = 1;
 	}
@@ -107,23 +107,23 @@ int spawn_pty(char * const * argv, pid_t * pid, int * errfd)
     char pty_name[] = "/dev/pty??";
     char tty_name[] = "/dev/tty??";
     int len = strlen(tty_name);
-    
+
     ttydev = tty_name;
-    
+
     for (c1 = "pqrstuvwxyz"; *c1; c1++)
     {
         pty_name[len - 2] = tty_name[len - 2] = *c1;
-        
+
         for (c2 = "0123456789abcdef"; *c2; c2++)
         {
             pty_name[len - 1] = tty_name[len - 1] = *c2;
-            
+
             if ( (master = open(pty_name, O_RDWR)) < 0 )
                 continue;
-            
+
             if (access(tty_name, R_OK | W_OK) == 0)
                 goto _found_pty;
-            
+
             close(master);
         }
     }
@@ -137,14 +137,14 @@ _found_pty:
 	fprintf(stderr, "NO PTY, using pipe as a fallback\n");
         if ( pipe(hh) < 0 )
             return -1; // no chance
-        
+
         master = hh[0];
         tty = hh[1];
     }
     if ( errfd ) // expecting error output separate
     {
         int hh[2];
-        
+
         if ( pipe(hh) < 0 )
         {
             close(master);
@@ -173,12 +173,12 @@ _found_pty:
         close(master); // close master pty (not used)
         if ( errfd )
             close(*errfd);
-        
+
         setsid();
         if ( !nopty )
         {
             tty = open(ttydev, O_WRONLY);
-            
+
             if ( tty < 0 )
                 exit(ENOTTY);
 #ifdef HAVE_STREAMS
@@ -213,12 +213,12 @@ _found_pty:
         putenv("COLUMNS=80");
         putenv("LINES=25");
 #endif
-        
+
         execvp(*argv, argv);
-        
+
         if ( verbose )
             outputs(2, *argv, ": ", strerror(errno), "\n", 0);
-        
+
         exit(255);
     }
     // parent process
@@ -231,13 +231,13 @@ _found_pty:
 #endif
     // set non-blocking mode
     int flags = fcntl(master, F_GETFL);
-    
+
     if ( flags != -1 )
         fcntl(master, F_SETFL, flags|O_NONBLOCK|FD_CLOEXEC);
     if ( errfd )
     {
         flags = fcntl(*errfd, F_GETFL);
-        
+
         if ( flags != -1 )
             fcntl(*errfd, F_SETFL, flags|O_NONBLOCK|FD_CLOEXEC);
     }
@@ -320,7 +320,7 @@ static void child_stream_reset_line(struct child_stream *strm)
 static int child_stream_poll_child(struct child_stream *strm, struct pollfd *pfd)
 {
     int rc = 0;
-    
+
     if ( pfd->revents & POLLMASK )
     {
         // write(2, "+", 1);
@@ -349,7 +349,7 @@ static int child_stream_poll_child(struct child_stream *strm, struct pollfd *pfd
                 // linux, hp-ux: posix approved behaviour for
                 // non-blocking channel having no input.
                 return 0;
-            
+
             // linux: error reading from channel
             // hp-ux, sun: error or eof
             child_stream_write_down(strm);
@@ -378,7 +378,7 @@ int do_buffer(struct child_stream *buf, struct pollfd *fds,
               struct hook *hooks, int hcount, int id)
 {
     int read_ok = child_stream_poll_child(buf, fds);
-    
+
     if ( buf->line )
     {
         int llen = buf->eol - buf->line - 1 /* \0 */;
@@ -416,10 +416,10 @@ int ptyrun(char* argv[], struct hook * hooks, int hcount, int merge, pid_t *chil
     fds[1].events = fds[0].events = POLLIN;
 #endif
     int status = -1;
-    
+
     if ( fds[0].fd < 0 )
         return -1;
-    
+
     struct child_stream buf, ebuf;
     int rc = -1, wok;
     int timeout = -1;

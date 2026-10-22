@@ -40,7 +40,7 @@ int outputs(int fd, const char * arg0, ...)
 {
     if ( !arg0 )
         return 0;
-    
+
     va_list ap;
     va_start(ap, arg0);
     int n = 1;
@@ -64,7 +64,7 @@ int output(int fd, const char * arg0, int len0, ...)
 {
     if ( !arg0 )
         return 0;
-    
+
     va_list ap;
     va_start(ap, len0);
     int n = 1, al;
@@ -75,7 +75,7 @@ int output(int fd, const char * arg0, int len0, ...)
         al = va_arg(ap, int);
         ++n;
     }
-    
+
     va_end(ap);
     va_start(ap, len0);
     struct iovec * vec = (struct iovec *)alloca(sizeof(struct iovec) * n);
@@ -95,7 +95,7 @@ int outputf(int fd, const char * format, ...)
 {
     va_list ap;
     va_start(ap, format);
-    
+
     FILE * fp = 1 == fd ? stdout: (2 == fd ? stderr: fdopen(fd, "w"));
     if ( fp )
     {
