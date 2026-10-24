@@ -80,7 +80,7 @@ static int external(int fd, char * line, int len)
         // parent
         close(hh[0]);
     }
-    write(hh[1], line, strlen(line)); // send the line to the filter
+    write(hh[1], line, len); // send the line to the filter
     return DONE; // filter is completely responsible for output
 }
 
