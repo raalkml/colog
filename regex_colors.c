@@ -34,7 +34,7 @@ static struct regex_color colors[] = {
 #define SYSTEMD_TIMESTAMP "[0-9]+-[0-9]+-[0-9]+T..:..:..\\.[0-9]+\\+..:.. "
     { /* postfix deferred */
         STDIN_FILENO,
-        "^("UNIX_TIMESTAMP"|"SYSTEMD_TIMESTAMP")(postfix/smtp)(\\[[0-9]+\\])(:)(.*, status=deferred )(.*)",
+        "^("UNIX_TIMESTAMP"|"SYSTEMD_TIMESTAMP")([^ \t]+ )(postfix/smtp)(\\[[0-9]+\\])(:)(.*, status=deferred )(.*)",
         {
             esc_ cyan _esc,
             esc_ yellow _esc,
