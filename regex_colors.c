@@ -87,29 +87,26 @@ static void writen(int fd, const char *s, int n)
         (void)write(fd, s, n);
 }
 
-void recursive_output(int fd, char *line, int sub, int psub)
+int recursive_output(const int fd, const char *line, const int sub)
 {
-    int this = sub;
-    int so = m[this].rm_so, eo = m[this].rm_eo;
-
-    if (so == eo)
-        return;
-    while (sub < rc->re.re_nsub) {
-        ++sub;
-        if (m[sub].rm_so == m[sub].rm_eo)
-            continue;
-        if (m[sub].rm_so >= eo)
+    int so = m[sub].rm_so;
+    const int eo = m[sub].rm_eo;
+    int next = sub + 1;
+    while (next < rc->re.re_nsub + 1) {
+        if (m[next].rm_so >= eo)
             break;
-        writes(fd, rc->clr[this]);
-        writen(fd, line + so, m[sub].rm_so - so);
-        recursive_output(fd, line, sub, this);
-        so = m[sub].rm_eo;
+        if (so < m[next].rm_so) {
+            writes(fd, rc->clr[sub]);
+            writen(fd, line + so, m[next].rm_so - so);
+        }
+        so = m[next].rm_eo;
+        next = recursive_output(fd, line, next);
     }
     if (so < eo) {
-        writes(fd, rc->clr[this]);
+        writes(fd, rc->clr[sub]);
         writen(fd, line + so, eo - so);
     }
-    writes(fd, psub == -1 ? esc_ normal _esc : rc->clr[psub]);
+    return next;
 }
 
 int regex_colors(int fd, char *line, int len)
@@ -141,9 +138,11 @@ int regex_colors(int fd, char *line, int len)
         m[0].rm_so = 0;
         m[0].rm_eo = len;
         if (regexec(&rc->re, line, rc->re.re_nsub + 1, m, REG_STARTEND) == 0) {
+            if (verbose)
+                fprintf(stderr, "%s: match%u!\n", rc->expr, i);
             writes(fd, esc_ normal _esc);
             writen(fd, line, m[0].rm_so);
-            recursive_output(fd, line, 0, -1);
+            recursive_output(fd, line, 0);
             writes(fd, esc_ normal _esc);
             writen(fd, line + m[0].rm_eo, len - m[0].rm_eo);
             writen(fd, "\n", 1);
