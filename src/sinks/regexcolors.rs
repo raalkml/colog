@@ -130,7 +130,7 @@ impl super::Sink for RegexColors {
             // See regexec manual for REG_STARTEND:
             m[0] = libc::regmatch_t { rm_so: 0, rm_eo: len as libc::regoff_t };
             if unsafe {
-                libc::regexec(self.re[i].as_ptr() as *mut libc::regex_t,
+                libc::regexec(self.re[i].as_ptr() as *const libc::regex_t,
                               buf.as_ptr() as *const libc::c_char,
                               pat.clr.len().clamp(1, count_of(&m)) as libc::size_t,
                               m.as_ptr() as *mut libc::regmatch_t,
