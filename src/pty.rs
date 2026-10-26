@@ -117,9 +117,17 @@ fn process_command(pid: libc::pid_t, fd: libc::c_int, hooks: &mut [&mut dyn Sink
             if !h.sink(1, ln) { break; }
         }
     }
-    let mut status : libc::c_int = 0;
-    let _ = unsafe { libc::waitpid(pid, &mut status, 0) };
-    status
+    loop {
+        let mut status : libc::c_int = 0;
+        let ret = unsafe { libc::waitpid(pid, &mut status, 0) };
+        if ret > 0 { return status; }
+        if ret == -1 {
+            let errno = Errno::current();
+            if errno.value == libc::EINTR { continue; }
+            break;
+        }
+    }
+    -1
 }
 
 pub fn ptyrun(command: Vec<String>, hooks: &mut [&mut dyn Sink]) -> libc::c_int {
