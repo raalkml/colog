@@ -50,10 +50,8 @@ impl ExternalFilter {
             }
         }
     }
-}
 
-impl super::Sink for ExternalFilter {
-    fn sink(&mut self, _fd: libc::c_int, buf: &[u8]) -> bool {
+    pub fn filter(&self, buf: &[u8]) -> bool {
         let _ = unsafe { libc::write(self.fd, buf.as_ptr() as *const libc::c_void, buf.len()) };
         false
     }

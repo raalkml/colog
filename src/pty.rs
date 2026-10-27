@@ -4,9 +4,16 @@
  */
 extern crate libc;
 use libc::{open, close, dup2, O_RDWR, O_CLOEXEC, O_NONBLOCK};
-use super::sinks::Sink;
 use super::helpers::Errno;
-use super::iobuf::*;
+
+pub trait OutputReceiver {
+    // It is normal for get_buf to return less then requested,
+    // but should provide at least some space.
+    fn get_buf(&mut self, n: usize) -> &mut [u8];
+    fn put_buf(&mut self, n: usize);
+    // Called when the child process closes  its stdout
+    fn eof(&mut self) {}
+}
 
 fn get_pipes() -> [libc::c_int; 2] {
     let mut fds = [ -1 as libc::c_int, -1 ];
@@ -76,14 +83,14 @@ fn exec_command(command: Vec<String>, out_fd: libc::c_int) -> ! {
     }
 }
 
-fn process_command(pid: libc::pid_t, fd: libc::c_int, hooks: &mut [&mut dyn Sink]) -> libc::c_int {
-    let mut iob = IoBuf::<{ libc::BUFSIZ as usize }>::new();
+fn process_command(pid: libc::pid_t, fd: libc::c_int, out: &mut impl OutputReceiver) -> libc::c_int {
     loop {
-        let buf = iob.get_buf(libc::BUFSIZ as usize);
+        let buf = out.get_buf(libc::BUFSIZ as usize);
         let rd = unsafe { libc::read(fd, buf.as_mut_ptr() as *mut libc::c_void, buf.len()) };
         if rd == 0 { break; }
-        if rd > 0 { iob.put_buf(rd as usize); }
-        else if rd < 0 {
+        if rd > 0 {
+            out.put_buf(rd as usize);
+        } else if rd < 0 {
             let errno = Errno::current();
             if errno.value == libc::EAGAIN {
                 let mut fds = libc::pollfd {
@@ -100,23 +107,8 @@ fn process_command(pid: libc::pid_t, fd: libc::c_int, hooks: &mut [&mut dyn Sink
                 break;
             }
         }
-        // split into lines and pass to the hooks
-        loop {
-            let ln = iob.peek_line();
-            if ln.len() == 0 { break; }
-            for h in hooks.iter_mut() {
-                if !h.sink(1, ln) { break; }
-            }
-            iob.consume(ln.len());
-        }
     }
-    // check if the buffer still has something and pass that to the hooks
-    let ln = iob.peek();
-    if ln.len() > 0 {
-        for h in hooks.iter_mut() {
-            if !h.sink(1, ln) { break; }
-        }
-    }
+    out.eof();
     loop {
         let mut status : libc::c_int = 0;
         let ret = unsafe { libc::waitpid(pid, &mut status, 0) };
@@ -130,7 +122,7 @@ fn process_command(pid: libc::pid_t, fd: libc::c_int, hooks: &mut [&mut dyn Sink
     -1
 }
 
-pub fn ptyrun(command: Vec<String>, hooks: &mut [&mut dyn Sink]) -> libc::c_int {
+pub fn ptyrun(command: Vec<String>, out: &mut impl OutputReceiver) -> libc::c_int {
     let fds = get_pipes();
     if fds[0] == -1 { return -1; }
     match unsafe { libc::fork() } {
@@ -138,13 +130,13 @@ pub fn ptyrun(command: Vec<String>, hooks: &mut [&mut dyn Sink]) -> libc::c_int 
             eprintln!("Subprocess spawning failure: {}", Errno::current());
             return -1
         },
-        0 => {
+        0 => { // child process
             unsafe { close(fds[0]); } // master
             exec_command(command, fds[1])
         },
         pid => {
             unsafe { close(fds[1]); } // tty
-            process_command(pid, fds[0], hooks)
+            process_command(pid, fds[0], out)
         }
     }
 }

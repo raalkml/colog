@@ -119,8 +119,8 @@ where
     next
 }
 
-impl super::Sink for RegexColors {
-    fn sink(&mut self, _fd: libc::c_int, buf: &[u8]) -> bool {
+impl RegexColors {
+    pub fn markup(&mut self, buf: &[u8]) -> bool {
         let mut len = buf.len();
         for c in buf.iter().rev() {
             if *c == b'\r' || *c == b'\n' { len -= 1; } else { break; }
@@ -158,10 +158,10 @@ impl super::Sink for RegexColors {
                 }
                 // the line terminator (the original line terminator was removed)
                 write1(EOL);
-                return false;
+                return true;
             }
         }
-        true
+        false
     }
 }
 

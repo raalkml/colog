@@ -2,13 +2,11 @@
  * A log colorizer.
  */
 extern crate libc;
-mod sinks;
+mod externalfilter;
+mod regexcolors;
 mod pty;
 mod helpers;
 mod iobuf;
-
-use sinks::Sink;
-use pty::ptyrun;
 
 extern "C" fn interrupt_handler(sig: libc::c_int) {
     eprintln!("\n{:?}", helpers::strsignal(sig));
@@ -21,7 +19,10 @@ extern "C" fn terminate_handler(sig: libc::c_int) {
 }
 
 fn usage() {
-    println!("colog [-v|--verbose -c <filter>] PROGRAM ARGS...");
+    println!("colog [-v|--verbose -c <filter>] PROGRAM ARGS...
+
+<filter> is a shell command which will receive all lines of the
+PROGRAM output, which were not colorized by the built-in rules.");
 }
 
 fn main() {
@@ -70,22 +71,19 @@ fn main() {
     helpers::signal(libc::SIGTERM, terminate_handler);
     helpers::signal(libc::SIGPIPE, terminate_handler);
     helpers::signal(libc::SIGHUP, terminate_handler);
-    let mut extf; // so that the *optional* sink can "live long enough"
-    let hooks : &mut [&mut dyn Sink] = &mut [
-	&mut sinks::regexcolors::RegexColors::new(),
-	if let Some(ref filter) = filter_command {
-            extf = sinks::externalfilter::ExternalFilter::new(filter.clone());
-            if let Err(errno) = extf.start() {
-                eprintln!("Starting filter command: {}", errno);
-                std::process::exit(254);
-            }
-            &mut extf
-        } else {
-            &mut sinks::stdout::StdoutSink {}
-        },
-    ];
 
-    match ptyrun(command, hooks) {
+    let mut splitter = LineSplitter::<{ libc::BUFSIZ as usize }> {
+        iob: iobuf::IoBuf::new(),
+	markup: &mut regexcolors::RegexColors::new(),
+        output: filter_command.map(|f| externalfilter::ExternalFilter::new(f.clone())),
+    };
+    if let Some(ref mut filter) = splitter.output {
+        if let Err(errno) = filter.start() {
+            eprintln!("Starting filter command: {}", errno);
+            std::process::exit(254);
+        }
+    }
+    match pty::ptyrun(command, &mut splitter) {
         -1 => std::process::exit(255),
         status =>
             if libc::WIFEXITED(status) {
@@ -95,6 +93,51 @@ fn main() {
             } else {
                 std::process::exit(libc::WEXITSTATUS(status))
             }
+    }
+}
+
+struct LineSplitter<'a, const S: usize> {
+    iob: iobuf::IoBuf<S>,
+    markup: &'a mut regexcolors::RegexColors,
+    output: Option<externalfilter::ExternalFilter>,
+}
+
+impl<'a, const S: usize> LineSplitter<'a, S> {
+    fn write_out(&self, b: &[u8]) {
+        if let Some(ref filter) = self.output {
+            filter.filter(b);
+        } else {
+            unsafe {
+                libc::write(libc::STDOUT_FILENO,
+                            b.as_ptr() as *const libc::c_void,
+                            b.len());
+            }
+        }
+    }
+}
+
+impl<'a, const S: usize> pty::OutputReceiver for LineSplitter<'a, S> {
+    fn get_buf(&mut self, n: usize) -> &mut [u8] {
+        self.iob.get_buf(n)
+    }
+    fn put_buf(&mut self, n: usize) {
+        self.iob.put_buf(n);
+        loop {
+            let ln = self.iob.peek_line();
+            if ln.len() == 0 { break; }
+            if !self.markup.markup(ln) {
+                self.write_out(ln);
+            }
+            self.iob.consume(ln.len());
+        }
+    }
+    fn eof(&mut self) {
+        let b = self.iob.peek();
+        if b.len() > 0 {
+            if !self.markup.markup(b) {
+                self.write_out(b);
+            }
+        }
     }
 }
 
