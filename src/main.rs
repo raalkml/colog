@@ -75,7 +75,7 @@ fn main() {
     let mut splitter = LineSplitter::<{ libc::BUFSIZ as usize }> {
         iob: iobuf::IoBuf::new(),
 	markup: &mut regexcolors::RegexColors::new(),
-        output: filter_command.map(|f| externalfilter::ExternalFilter::new(f.clone())),
+        output: filter_command.map(|f| externalfilter::ExternalFilter::new(f)),
     };
     if let Some(ref mut filter) = splitter.output {
         if let Err(errno) = filter.start() {
