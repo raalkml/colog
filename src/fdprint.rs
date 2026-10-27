@@ -1,9 +1,8 @@
 #![macro_use]
+#![allow(unused)]
 
 extern crate libc;
-use super::misc::{u64toa, u32toa};
 
-#[allow(unused)]
 pub fn fdput_c_str(fd: libc::c_int, arg: *const libc::c_char) {
     if !arg.is_null() {
         unsafe {
@@ -12,14 +11,12 @@ pub fn fdput_c_str(fd: libc::c_int, arg: *const libc::c_char) {
     }
 }
 
-#[allow(unused)]
 pub fn fdput_bytes(fd: libc::c_int, arg: &[u8]) {
     unsafe {
         libc::write(fd, arg.as_ptr() as *const libc::c_void, arg.len());
     }
 }
 
-#[allow(unused)]
 pub trait FdPuts {
     fn fdputs(self, fd: libc::c_int);
 }
@@ -190,3 +187,20 @@ macro_rules! eprintsln {
         eprintsln!($($es),+)
     }};
 }
+
+pub fn u64toa(u: u64, s: &mut [u8]) -> &mut [u8] {
+    assert!(s.len() >= 10);
+    const DEC : &[u8; 10] = b"0123456789";
+    let mut pos = s.len();
+    let mut u = u;
+    for e in s.into_iter().rev() {
+        pos -= 1;
+        *e = DEC[(u % 10) as usize];
+        u /= 10;
+        if u == 0 { break }
+    }
+    unsafe { s.get_unchecked_mut(pos ..) }
+}
+
+pub fn u32toa(u: u32, s: &mut [u8]) -> &mut [u8] { u64toa(u as u64, s) }
+

@@ -16,7 +16,6 @@ mod pty;
 mod helpers;
 use helpers::BadVec;
 mod iobuf;
-mod misc;
 mod fdprint;
 
 fn exit(code: i32) -> ! {
