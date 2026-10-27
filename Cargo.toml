@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [profile.dev]
-#panic = "abort"
-#debug-assertions = false
-#lto = true
+panic = "abort"
+debug-assertions = false
+lto = true
 opt-level = 1
 
 [profile.release]

@@ -1,4 +1,6 @@
 use crate::helpers::count_of;
+use crate::eprintsln;
+use core::mem;
 mod tests;
 
 #[derive(Debug)]
@@ -61,12 +63,12 @@ static BOLD_GREEN : &str = "\x1b[1;32m";
 static MAGENTA : &str = "\x1b[22;35m";
 
 pub struct RegexColors {
-    re: [[u8; std::mem::size_of::<libc::regex_t>()]; count_of(&PATTERNS) ]
+    re: [[u8; mem::size_of::<libc::regex_t>()]; count_of(&PATTERNS) ]
 }
 
 impl RegexColors {
     pub fn new() -> RegexColors {
-        let rc = RegexColors { re: [ [0; std::mem::size_of::<libc::regex_t>()]; count_of(&PATTERNS) ] };
+        let rc = RegexColors { re: [ [0; mem::size_of::<libc::regex_t>()]; count_of(&PATTERNS) ] };
         for (i, pat) in PATTERNS.iter().enumerate() {
             let err = unsafe {
                 libc::regcomp(rc.re[i].as_ptr() as *mut libc::regex_t,
@@ -74,7 +76,7 @@ impl RegexColors {
                               libc::REG_EXTENDED | libc::REG_ICASE)
             };
             if err != 0 {
-                todo!("print regex compilation errors");
+                eprintsln!("TODO print regex compilation errors");
                 //eprintln!("regcomp{i} \"{}\" -> {_err}", pat.patn);
             }
         }

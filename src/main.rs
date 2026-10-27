@@ -1,70 +1,97 @@
 /*
  * A log colorizer.
  */
+
+#![cfg_attr(not(test), no_main)]
+#![cfg_attr(not(test), no_std)]
+#![cfg_attr(test, allow(unused))]
+
+use core::ffi;
+use core::ptr;
+
 extern crate libc;
 mod externalfilter;
 mod regexcolors;
 mod pty;
 mod helpers;
+use helpers::BadVec;
 mod iobuf;
+mod misc;
+mod fdprint;
+
+fn exit(code: i32) -> ! {
+    unsafe { libc::exit(code); }
+}
 
 extern "C" fn interrupt_handler(sig: libc::c_int) {
-    eprintln!("\n{:?}", helpers::strsignal(sig));
-    std::process::exit(1);
+    eprintsln!("\n", helpers::strsignal(sig));
+    exit(128 + sig);
 }
 
 extern "C" fn terminate_handler(sig: libc::c_int) {
-    eprintln!("\n{:?}", helpers::strsignal(sig));
-    std::process::exit(1);
+    eprintsln!("\n", helpers::strsignal(sig));
+    exit(128 + sig);
 }
 
 fn usage() {
-    println!("colog [-v|--verbose -c <filter>] PROGRAM ARGS...
+    printsln!("colog [-v|--verbose -c <filter>] PROGRAM ARGS...
 
 <filter> is a shell command which will receive all lines of the
 PROGRAM output, which were not colorized by the built-in rules.");
 }
 
-fn main() {
+#[cfg(not(test))]
+#[unsafe(no_mangle)]
+pub extern "C" fn main(argc: i32, argv: *const *const libc::c_char) -> i32 {
     let mut verbose = false;
     let mut filter_command = None;
-    let mut command = Vec::new();
+    let mut command = BadVec::<*const libc::c_char, 20>::new();
     {
         let mut filter_command_arg = false;
         let mut command_arg = false;
-        for arg in std::env::args().skip(1) {
+        for arg in 1 .. argc {
+            let argz = unsafe { ffi::CStr::from_ptr(*argv.add(arg as usize)) };
+            let arg = argz.to_str().expect("Valid UTF-8 in argument expected");
             if command_arg {
-                command.push(arg);
+                command.push(argz.as_ptr());
             } else if filter_command_arg {
                 filter_command_arg = false;
-                filter_command = Some(arg);
+                filter_command = Some(argz);
             } else if arg == "--" {
                 command_arg = true;
             } else if arg == "--help" {
                 usage();
-                return;
+                return 0;
             } else if arg == "-v" || arg == "--verbose" {
                 verbose = true;
             } else if arg.starts_with("-c") {
                 if arg.len() > 2 {
-                    filter_command = Some(arg[2..].to_string());
+                    filter_command = Some(unsafe {
+                        ffi::CStr::from_ptr(argz.as_ptr().add(2))
+                    });
                 } else {
                     filter_command_arg = true;
                 }
             } else {
-                command.push(arg);
+                command.push(argz.as_ptr());
                 command_arg = true;
             }
         }
     }
     if command.len() == 0 {
         usage();
-        return;
+        return 1;
     }
+    command.push(ptr::null());
     if verbose {
-        eprintln!("Running: {command:?}");
+        eprints!("Running:");
+        for a in command.iter() {
+            if a.is_null() { break; }
+            eprints!(" '", a, "'");
+        }
+        eprints!("\n");
         if let Some(ref filter) = filter_command {
-            eprintln!("Filter: \"{filter}\"");
+            eprintsln!("Filter: \"", filter, "\"");
         }
     }
     helpers::signal(libc::SIGINT, interrupt_handler);
@@ -79,19 +106,19 @@ fn main() {
     };
     if let Some(ref mut filter) = splitter.output {
         if let Err(errno) = filter.start() {
-            eprintln!("Starting filter command: {}", errno);
-            std::process::exit(254);
+            eprintsln!("Starting filter command: ", errno);
+            exit(254);
         }
     }
-    match pty::ptyrun(command, &mut splitter) {
-        -1 => std::process::exit(255),
+    match pty::ptyrun(command.as_ptr(), &mut splitter) {
+        -1 => 255,
         status =>
             if libc::WIFEXITED(status) {
-                std::process::exit(libc::WEXITSTATUS(status))
+                libc::WEXITSTATUS(status)
             } else if libc::WIFSIGNALED(status) {
-                std::process::exit(128 + libc::WTERMSIG(status))
+                128 + libc::WTERMSIG(status)
             } else {
-                std::process::exit(libc::WEXITSTATUS(status))
+                libc::WEXITSTATUS(status)
             }
     }
 }
@@ -99,7 +126,7 @@ fn main() {
 struct LineSplitter<'a, const S: usize> {
     iob: iobuf::IoBuf<S>,
     markup: &'a mut regexcolors::RegexColors,
-    output: Option<externalfilter::ExternalFilter>,
+    output: Option<externalfilter::ExternalFilter<'a>>,
 }
 
 impl<'a, const S: usize> LineSplitter<'a, S> {
@@ -107,11 +134,7 @@ impl<'a, const S: usize> LineSplitter<'a, S> {
         if let Some(ref filter) = self.output {
             filter.filter(b);
         } else {
-            unsafe {
-                libc::write(libc::STDOUT_FILENO,
-                            b.as_ptr() as *const libc::c_void,
-                            b.len());
-            }
+            fdprint::fdput_bytes(libc::STDOUT_FILENO, b);
         }
     }
 }
@@ -141,3 +164,16 @@ impl<'a, const S: usize> pty::OutputReceiver for LineSplitter<'a, S> {
     }
 }
 
+#[cfg(not(test))]
+#[panic_handler]
+fn panic_handler_fn(info: &core::panic::PanicInfo) -> ! {
+    eprintsln!("=== Panic ===");
+    if let Some(msg) = info.message().as_str() {
+        eprintsln!(msg);
+    }
+    if let Some(loc) = info.location() {
+        eprintsln!(loc.file().as_bytes(), ":", loc.line());
+    }
+    unsafe { libc::raise(libc::SIGKILL); }
+    loop {}
+}
