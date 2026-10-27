@@ -1,3 +1,4 @@
+#![allow(unused)]
 use core::mem;
 use core::ffi::c_str::CStr;
 extern crate libc;
@@ -13,7 +14,6 @@ pub struct BadVec<T, const N: usize> {
     size: usize,
 }
 
-#[allow(unused)]
 impl<T, const N: usize> BadVec<T, N> {
     pub fn new() -> Self {
         Self {
@@ -74,7 +74,6 @@ impl<'a, T: Clone + Copy, const N: usize> Iterator for BadVecIter<'a, T, N> {
     }
 }
 
-#[allow(unused)]
 pub fn strsignal(sig: libc::c_int) -> &'static CStr {
     // SAFETY: Returns a non-NULL pointer to a static string in libc
     unsafe { CStr::from_ptr(libc::strsignal(sig)) }
@@ -101,7 +100,6 @@ impl Errno {
         Errno(unsafe { *libc::__errno_location() })
     }
 
-    #[allow(unused)]
     pub fn cstrerror(&self) -> &'static CStr {
         unsafe {
             let p = libc::strerror(self.0);
@@ -109,7 +107,6 @@ impl Errno {
         }
     }
 
-    #[allow(unused)]
     pub fn strerror(&self) -> &'static str {
         let cs = self.cstrerror();
         if let Ok(s) = cs.to_str() { s } else { &"Invalid encoding" }
