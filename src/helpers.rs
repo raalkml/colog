@@ -30,13 +30,13 @@ impl<T, const N: usize> BadVec<T, N> {
         };
     }
     pub fn push(&mut self, e: T) {
-        assert!(self.count < N);
+        assert!(self.count < self.size);
         if self.count == self.size { self.realloc() }
         unsafe { *self.storage.add(self.count) = e; }
         self.count += 1;
     }
-    pub const fn len(&self) -> usize { self.count }
-    pub const fn size(&self) -> usize { N }
+    pub fn len(&self) -> usize { self.count }
+    pub fn size(&self) -> usize { self.size }
     pub fn as_ptr(&self) -> *const T { self.storage }
     pub fn iter(&self) -> BadVecIter<'_, T, N> {
         BadVecIter { inner: self, off: 0 }
