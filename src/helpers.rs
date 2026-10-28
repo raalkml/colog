@@ -1,5 +1,6 @@
 #![allow(unused)]
 use core::mem;
+use core::ptr;
 use core::ffi::c_str::CStr;
 extern crate libc;
 
@@ -81,14 +82,33 @@ pub fn strsignal(sig: libc::c_int) -> &'static CStr {
 
 pub fn signal(sig: libc::c_int, f: extern "C" fn(i32)) -> libc::c_int {
     let mut empty_sigset = mem::MaybeUninit::<libc::sigset_t>::zeroed();
-    unsafe { libc::sigemptyset(empty_sigset.as_mut_ptr()) };
+    unsafe { libc::sigemptyset(empty_sigset.as_mut_ptr()); }
     let act = libc::sigaction {
         sa_sigaction: f as libc::sighandler_t,
         sa_mask: unsafe { *empty_sigset.as_mut_ptr() },
         sa_flags: 0,
         sa_restorer: None
     };
-    unsafe { libc::sigaction(sig, &raw const act, core::ptr::null_mut()) }
+    unsafe { libc::sigaction(sig, &raw const act, ptr::null_mut()) }
+}
+
+pub fn sigset_sigprocmask(how: libc::c_int, mask: &[libc::c_int]) -> libc::c_int {
+    let mut sigset = mem::MaybeUninit::<libc::sigset_t>::zeroed();
+    unsafe {
+        libc::sigemptyset(sigset.as_mut_ptr());
+        for sig in mask {
+            libc::sigaddset(sigset.as_mut_ptr(), *sig);
+        }
+        libc::sigprocmask(how, sigset.as_ptr(), ptr::null_mut())
+    }
+}
+
+pub fn block_signals(mask: &[libc::c_int]) {
+    sigset_sigprocmask(libc::SIG_BLOCK, mask);
+}
+
+pub fn unblock_signals(mask: &[libc::c_int]) {
+    sigset_sigprocmask(libc::SIG_UNBLOCK, mask);
 }
 
 #[derive(Copy,Clone)]

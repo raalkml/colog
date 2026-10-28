@@ -6,7 +6,7 @@ use core::ffi;
 
 pub struct ExternalFilter<'a> {
     filter: &'a ffi::CStr,
-    pid: libc::pid_t,
+    pub pid: libc::pid_t,
     fd: libc::c_int,
 }
 

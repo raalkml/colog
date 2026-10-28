@@ -73,61 +73,74 @@ fn exec_command(args: *const *const libc::c_char, out_fd: libc::c_int) -> ! {
     }
 }
 
-fn process_command(pid: libc::pid_t, fd: libc::c_int, out: &mut impl OutputReceiver) -> libc::c_int {
-    loop {
-        let buf = out.get_buf(libc::BUFSIZ as usize);
-        let rd = unsafe { libc::read(fd, buf.as_mut_ptr() as *mut libc::c_void, buf.len()) };
-        if rd == 0 { break; }
-        if rd > 0 {
-            out.put_buf(rd as usize);
-        } else if rd < 0 {
-            let errno = Errno::current();
-            if errno.0 == libc::EAGAIN {
-                let mut fds = libc::pollfd {
-                    fd,
-                    events: libc::POLLIN | libc::POLLPRI,
-                    revents: 0
-                };
-                unsafe { libc::poll(&raw mut fds, 1, -1) };
-                continue;
-            } else {
-                if errno.0 != libc::EIO {
-                    eprintsln!("read failure: ", errno);
-                }
-                break;
+pub struct Context<'a> {
+    pub pid: libc::pid_t,
+    fd: libc::c_int,
+    out: &'a mut dyn OutputReceiver
+}
+
+impl<'a> Context<'a> {
+
+    pub fn create(command: *const *const libc::c_char, out: &'a mut dyn OutputReceiver) ->
+        Result<Context<'a>,Errno>
+    {
+        let fds = get_pipes();
+        if fds[0] == -1 { return Err(Errno(libc::ENOTTY)); }
+        match unsafe { libc::fork() } {
+            -1 => {
+                let errno = Errno::current();
+                eprintsln!("Subprocess spawning failure: ", errno);
+                return Err(errno)
+            },
+            0 => { // child process
+                unsafe { close(fds[0]); } // master
+                exec_command(command, fds[1])
+            },
+            pid => {
+                unsafe { close(fds[1]); } // tty
+                Ok(Context { pid, fd: fds[0], out })
             }
         }
     }
-    out.eof();
-    loop {
-        let mut status : libc::c_int = 0;
-        let ret = unsafe { libc::waitpid(pid, &mut status, 0) };
-        if ret > 0 { return status; }
-        if ret == -1 {
-            let errno = Errno::current();
-            if errno.0 == libc::EINTR { continue; }
-            break;
-        }
-    }
-    -1
-}
 
-pub fn ptyrun(command: *const *const libc::c_char, out: &mut impl OutputReceiver) -> libc::c_int {
-    let fds = get_pipes();
-    if fds[0] == -1 { return -1; }
-    match unsafe { libc::fork() } {
-        -1 => {
-            eprintsln!("Subprocess spawning failure: ", Errno::current());
-            return -1
-        },
-        0 => { // child process
-            unsafe { close(fds[0]); } // master
-            exec_command(command, fds[1])
-        },
-        pid => {
-            unsafe { close(fds[1]); } // tty
-            process_command(pid, fds[0], out)
+    pub fn read_until_exit(&mut self) -> libc::c_int {
+        loop {
+            let buf = self.out.get_buf(libc::BUFSIZ as usize);
+            let rd = unsafe { libc::read(self.fd, buf.as_mut_ptr() as *mut libc::c_void, buf.len()) };
+            if rd == 0 { break; }
+            if rd > 0 {
+                self.out.put_buf(rd as usize);
+            } else if rd < 0 {
+                let errno = Errno::current();
+                if errno.0 == libc::EAGAIN {
+                    let mut fds = libc::pollfd {
+                        fd: self.fd,
+                        events: libc::POLLIN | libc::POLLPRI,
+                        revents: 0
+                    };
+                    unsafe { libc::poll(&raw mut fds, 1, -1) };
+                    continue;
+                } else {
+                    if errno.0 != libc::EIO {
+                        eprintsln!("read failure: ", errno);
+                    }
+                    break;
+                }
+            }
         }
+        self.out.eof();
+        loop {
+            let mut status : libc::c_int = 0;
+            let ret = unsafe { libc::waitpid(self.pid, &mut status, 0) };
+            if ret > 0 { return status; }
+            if ret == -1 {
+                let errno = Errno::current();
+                if errno.0 == libc::EINTR { continue; }
+                break;
+            }
+        }
+        -1
     }
+
 }
 

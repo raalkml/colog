@@ -8,6 +8,7 @@
 
 use core::ffi;
 use core::ptr;
+use core::sync::atomic::{AtomicBool, AtomicI32, Ordering};
 
 extern crate libc;
 mod externalfilter;
@@ -18,18 +19,41 @@ use helpers::BadVec;
 mod iobuf;
 mod fdprint;
 
+static COMMAND_PID : AtomicI32 = AtomicI32::new(0);
+static EXTERNALFILTER_PID : AtomicI32 = AtomicI32::new(0);
+static VERBOSE: AtomicBool = AtomicBool::new(false);
+
 fn exit(code: i32) -> ! {
     unsafe { libc::exit(code); }
 }
 
+fn kill_subprocs(sig: libc::c_int) {
+    unsafe {
+        let pid = COMMAND_PID.load(Ordering::Relaxed);
+        if pid != 0 {
+            if VERBOSE.load(Ordering::Relaxed) {
+                eprintsln!("command process [", pid, "] killed");
+            }
+            libc::kill(-pid, sig);
+        }
+        let pid = EXTERNALFILTER_PID.load(Ordering::Relaxed);
+        if pid != 0 {
+            if VERBOSE.load(Ordering::Relaxed) {
+                eprintsln!("filter process [", pid, "] killed");
+            }
+            libc::kill(-pid, sig);
+        }
+    }
+}
+
 extern "C" fn interrupt_handler(sig: libc::c_int) {
     eprintsln!("\n", helpers::strsignal(sig));
-    exit(128 + sig);
+    kill_subprocs(libc::SIGHUP);
 }
 
 extern "C" fn terminate_handler(sig: libc::c_int) {
     eprintsln!("\n", helpers::strsignal(sig));
-    exit(128 + sig);
+    kill_subprocs(sig);
 }
 
 fn usage() {
@@ -42,7 +66,6 @@ PROGRAM output, which were not colorized by the built-in rules.");
 #[cfg(not(test))]
 #[unsafe(no_mangle)]
 pub extern "C" fn main(argc: i32, argv: *const *const libc::c_char) -> i32 {
-    let mut verbose = false;
     let mut filter_command = None;
     let mut command = BadVec::<*const libc::c_char, 20>::new();
     {
@@ -62,7 +85,7 @@ pub extern "C" fn main(argc: i32, argv: *const *const libc::c_char) -> i32 {
                 usage();
                 return 0;
             } else if arg == "-v" || arg == "--verbose" {
-                verbose = true;
+                VERBOSE.store(true, Ordering::Relaxed);
             } else if arg.starts_with("-c") {
                 if arg.len() > 2 {
                     filter_command = Some(unsafe {
@@ -82,7 +105,7 @@ pub extern "C" fn main(argc: i32, argv: *const *const libc::c_char) -> i32 {
         return 1;
     }
     command.push(ptr::null());
-    if verbose {
+    if VERBOSE.load(Ordering::Relaxed) {
         eprints!("Running:");
         for a in command.iter() {
             if a.is_null() { break; }
@@ -97,28 +120,38 @@ pub extern "C" fn main(argc: i32, argv: *const *const libc::c_char) -> i32 {
     helpers::signal(libc::SIGTERM, terminate_handler);
     helpers::signal(libc::SIGPIPE, terminate_handler);
     helpers::signal(libc::SIGHUP, terminate_handler);
+    let mask = [ libc::SIGINT, libc::SIGTERM, libc::SIGPIPE, libc::SIGHUP ];
 
     let mut splitter = LineSplitter::<{ libc::BUFSIZ as usize }> {
         iob: iobuf::IoBuf::new(),
 	markup: &mut regexcolors::RegexColors::new(),
         output: filter_command.map(|f| externalfilter::ExternalFilter::new(f)),
     };
+
     if let Some(ref mut filter) = splitter.output {
+        helpers::block_signals(&mask);
         if let Err(errno) = filter.start() {
             eprintsln!("Starting filter command: ", errno);
             exit(254);
         }
+        EXTERNALFILTER_PID.store(filter.pid, Ordering::Relaxed);
+        helpers::unblock_signals(&mask);
     }
-    match pty::ptyrun(command.as_ptr(), &mut splitter) {
-        -1 => 255,
-        status =>
-            if libc::WIFEXITED(status) {
-                libc::WEXITSTATUS(status)
-            } else if libc::WIFSIGNALED(status) {
-                128 + libc::WTERMSIG(status)
-            } else {
-                libc::WEXITSTATUS(status)
-            }
+        helpers::block_signals(&mask);
+    let ret = pty::Context::create(command.as_ptr(), &mut splitter);
+    if let Ok(mut pty) = ret {
+        COMMAND_PID.store(pty.pid, Ordering::Relaxed);
+        helpers::unblock_signals(&mask);
+        let status = pty.read_until_exit();
+        if libc::WIFEXITED(status) {
+            libc::WEXITSTATUS(status)
+        } else if libc::WIFSIGNALED(status) {
+            128 + libc::WTERMSIG(status)
+        } else {
+            libc::WEXITSTATUS(status)
+        }
+    } else {
+        255
     }
 }
 
